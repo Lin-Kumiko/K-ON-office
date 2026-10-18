@@ -1,6 +1,6 @@
-# DragonOffice Enterprise · 放学后茶会株式会社
+# 放学后茶会株式会社
 
-企业级 OA、HRM 与通用工作流一体化管理平台（轻音少女主题版本）。虚拟企业「放学后茶会株式会社」的全部人员与业务数据均为**合成数据**。
+工作流一体化管理平台（轻音少女版）。虚拟企业「放学后茶会株式会社」的全部人员与业务数据均为**合成数据**。
 
 - 后端：Python 3.14 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic 2 · SQLite（WAL）
 - 前端：Vue 3 · TypeScript · Vite 7 · Pinia · Vue Router · Element Plus · ECharts

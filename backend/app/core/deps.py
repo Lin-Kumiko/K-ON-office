@@ -1,0 +1,190 @@
+"""Request-scoped dependencies: DB session, current user, permission and data-scope checks."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import timedelta
+from typing import Iterator
+
+from fastapi import Depends, Query, Request
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from . import timeutil
+from .errors import Forbidden, Unauthorized
+from .security import token_digest
+from ..models import Department, Employee, User, UserSession
+
+SCOPE_RANK = {"self": 0, "department": 1, "all": 2}
+READ_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+def get_db(request: Request) -> Iterator[Session]:
+    write = request.method not in READ_METHODS
+    db = request.app.state.db.session(write=write)
+    try:
+        yield db
+    finally:
+        db.rollback()
+        db.close()
+
+
+def get_write_db(request: Request) -> Iterator[Session]:
+    """For GET endpoints that must record something (e.g. download logs)."""
+    db = request.app.state.db.session(write=True)
+    try:
+        yield db
+    finally:
+        db.rollback()
+        db.close()
+
+
+@dataclass
+class CurrentUser:
+    user: User
+    employee: Employee | None
+    permissions: set[str]
+    role_codes: set[str]
+    data_scope: str
+    session_id: int
+    ip: str | None = None
+    _dept_cache: set[int] | None = field(default=None, repr=False)
+
+    @property
+    def id(self) -> int:
+        return self.user.id
+
+    @property
+    def is_admin(self) -> bool:
+        return "admin" in self.role_codes
+
+    def has(self, perm: str) -> bool:
+        return self.is_admin or perm in self.permissions
+
+    def require(self, perm: str) -> None:
+        if not self.has(perm):
+            raise Forbidden(f"缺少权限：{perm}", code="PERMISSION_DENIED")
+
+    def require_employee(self) -> Employee:
+        if self.employee is None:
+            raise Forbidden("当前账号未关联员工档案", code="NO_EMPLOYEE_PROFILE")
+        return self.employee
+
+
+def build_current_user(db: Session, user: User, session_id: int, ip: str | None = None) -> CurrentUser:
+    perms: set[str] = set()
+    scope = "self"
+    for role in user.roles:
+        perms.update(p.code for p in role.permissions)
+        if SCOPE_RANK[role.data_scope] > SCOPE_RANK[scope]:
+            scope = role.data_scope
+    employee = db.scalar(select(Employee).where(Employee.user_id == user.id))
+    return CurrentUser(user=user, employee=employee, permissions=perms,
+                       role_codes={r.code for r in user.roles}, data_scope=scope, session_id=session_id, ip=ip)
+
+
+def current_user(request: Request, db: Session = Depends(get_db)) -> CurrentUser:
+    header = request.headers.get("Authorization", "")
+    if not header.lower().startswith("bearer "):
+        raise Unauthorized("未登录或登录已过期")
+    token = header[7:].strip()
+    sess = db.scalar(select(UserSession).where(UserSession.token_hash == token_digest(token)))
+    now = timeutil.now()
+    if sess is None or sess.revoked_at is not None or sess.expires_at <= now:
+        raise Unauthorized("未登录或登录已过期", code="SESSION_EXPIRED")
+    user = db.get(User, sess.user_id)
+    if user is None or user.status != "active":
+        raise Unauthorized("账号已停用", code="ACCOUNT_DISABLED")
+    if request.method not in READ_METHODS and (sess.last_seen_at is None or
+                                               now - sess.last_seen_at > timedelta(minutes=1)):
+        sess.last_seen_at = now  # flushed with the request's own commit
+    cu = build_current_user(db, user, sess.id, request.client.host if request.client else None)
+    # A user forced to change password may only reach the password / profile endpoints.
+    if user.must_change_password and not request.url.path.startswith(("/api/auth/",)):
+        raise Forbidden("首次登录或密码已重置，请先修改密码", code="PASSWORD_CHANGE_REQUIRED")
+    request.state.current_user = cu
+    return cu
+
+
+def require(*perms: str):
+    def _dep(cu: CurrentUser = Depends(current_user)) -> CurrentUser:
+        for p in perms:
+            cu.require(p)
+        return cu
+    return _dep
+
+
+def require_any(*perms: str):
+    def _dep(cu: CurrentUser = Depends(current_user)) -> CurrentUser:
+        if not any(cu.has(p) for p in perms):
+            raise Forbidden(f"缺少权限：{' / '.join(perms)}", code="PERMISSION_DENIED")
+        return cu
+    return _dep
+
+
+# ---------------------------------------------------------------- data scope
+def department_subtree(db: Session, root_id: int) -> set[int]:
+    rows = db.execute(select(Department.id, Department.parent_id)).all()
+    children: dict[int | None, list[int]] = {}
+    for did, pid in rows:
+        children.setdefault(pid, []).append(did)
+    out, stack = set(), [root_id]
+    while stack:
+        cur = stack.pop()
+        if cur in out:
+            continue
+        out.add(cur)
+        stack.extend(children.get(cur, []))
+    return out
+
+
+def scope_department_ids(db: Session, cu: CurrentUser) -> set[int] | None:
+    """None means unrestricted; otherwise the set of department ids the user may see."""
+    if cu.data_scope == "all" or cu.is_admin:
+        return None
+    if cu.data_scope == "department" and cu.employee is not None:
+        if cu._dept_cache is None:
+            depts = department_subtree(db, cu.employee.department_id)
+            # managers also see departments they lead
+            for d in db.scalars(select(Department.id).where(Department.manager_employee_id == cu.employee.id)):
+                depts |= department_subtree(db, d)
+            cu._dept_cache = depts
+        return cu._dept_cache
+    return set()
+
+
+def can_view_employee(db: Session, cu: CurrentUser, employee: Employee) -> bool:
+    if cu.employee is not None and cu.employee.id == employee.id:
+        return True
+    depts = scope_department_ids(db, cu)
+    if depts is None:
+        return True
+    if employee.department_id in depts:
+        return True
+    return cu.employee is not None and employee.manager_id == cu.employee.id
+
+
+def ensure_can_view_employee(db: Session, cu: CurrentUser, employee: Employee) -> None:
+    if not can_view_employee(db, cu, employee):
+        raise Forbidden("无权访问该员工数据", code="DATA_SCOPE_DENIED")
+
+
+def employee_scope_filter(db: Session, cu: CurrentUser, column):
+    """SQL filter for queries over an employee_id column honouring the data scope."""
+    depts = scope_department_ids(db, cu)
+    if depts is None:
+        return None
+    own = cu.employee.id if cu.employee else -1
+    sub = select(Employee.id).where((Employee.department_id.in_(depts)) | (Employee.manager_id == own))
+    return (column == own) | column.in_(sub)
+
+
+class PageParams:
+    def __init__(self, page: int = Query(1, ge=1, le=100000), page_size: int = Query(20, ge=1, le=200),
+                 sort: str | None = Query(None, max_length=64)):
+        self.page = page
+        self.page_size = page_size
+        self.sort = sort
+
+    @property
+    def offset(self) -> int:
+        return (self.page - 1) * self.page_size

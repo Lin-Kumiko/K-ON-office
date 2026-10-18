@@ -1,0 +1,33 @@
+{
+  "name": "dragonoffice-enterprise-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "2.3.2",
+    "echarts": "5.6.0",
+    "element-plus": "2.11.4",
+    "pinia": "3.0.3",
+    "vue": "3.5.22",
+    "vue-router": "4.5.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0",
+    "@types/node": "22.18.8",
+    "@vitejs/plugin-vue": "6.0.1",
+    "@vue/test-utils": "2.4.6",
+    "jsdom": "26.1.0",
+    "typescript": "5.9.3",
+    "vite": "7.1.9",
+    "vitest": "3.2.4",
+    "vue-tsc": "3.1.0"
+  }
+}

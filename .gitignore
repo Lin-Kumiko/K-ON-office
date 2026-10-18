@@ -1,0 +1,32 @@
+# dependencies (install locally, see README)
+backend/.venv/
+frontend/node_modules/
+
+# local data: development database, uploads (contain password hashes / user files)
+data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+
+# build output and caches
+frontend/dist/
+frontend/.vite-cache/
+__pycache__/
+*.pyc
+.coverage
+htmlcov/
+
+# test runtime artefacts (regenerated on every run)
+backend/.pytest_tmp/
+tests/.e2e-data/
+tests/e2e-results/
+tests/*.log
+frontend/test-results/
+frontend/playwright-report/
+
+# machine-specific tool config
+.claude/
+.vscode/
+.idea/
+*.log

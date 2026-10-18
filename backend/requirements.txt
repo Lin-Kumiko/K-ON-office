@@ -1,0 +1,11 @@
+fastapi==0.118.0
+uvicorn==0.37.0
+sqlalchemy==2.0.43
+alembic==1.16.5
+pydantic==2.12.0
+python-multipart==0.0.20
+tzdata==2025.2
+httpx==0.28.1
+pytest==8.4.2
+pytest-cov==7.0.0
+ruff==0.13.3

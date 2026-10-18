@@ -4,7 +4,7 @@
       <img src="/teacup.svg" alt="" class="logo" />
       <div v-if="!collapsed" class="brand-text">
         <div class="brand-name">放学后茶会</div>
-        <div class="brand-sub">DragonOffice Enterprise</div>
+        <div class="brand-sub" lang="ja">けいおん</div>
       </div>
     </div>
     <el-menu :default-active="active" :collapse="collapsed" router class="menu" background-color="transparent"

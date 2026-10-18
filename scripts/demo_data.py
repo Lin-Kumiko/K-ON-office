@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 
 import httpx
 
-MARKER = "【演示数据】欢迎来到放学后茶会株式会社"
+MARKER = "欢迎来到放学后茶会株式会社"
 
 
 class Client:
@@ -147,18 +147,17 @@ def main() -> int:
 
     print("[6/9] 公告与文档")
     cat = c["nodoka"].get("/api/announcements/categories")[0]["id"]
-    a = c["nodoka"].post("/api/announcements", json={"title": MARKER, "content": "这里是 DragonOffice Enterprise 演示环境。\n"
-                         "所有人员与业务数据均为合成数据。\n认真工作，然后喝茶。", "category_id": cat, "pinned": True})
+    a = c["nodoka"].post("/api/announcements", json={"title": MARKER, "content": "这里是轻音部。\n认真工作，然后喝茶。", "category_id": cat, "pinned": True})
     c["nodoka"].post(f"/api/announcements/{a['id']}/publish")
     music = next(d["id"] for d in c["nodoka"].get("/api/departments") if d["code"] == "MUSIC")
     a2 = c["nodoka"].post("/api/announcements", json={"title": "学园祭排练安排", "content": "每天放学后在音乐准备室排练两小时。",
                                                       "scope_type": "departments", "scope_department_ids": [music]})
     c["nodoka"].post(f"/api/announcements/{a2['id']}/publish")
     dcat = c["mio"].get("/api/documents/categories")[0]["id"]
-    c["mio"].call("POST", "/api/documents", files={"file": ("arrangement_v1.txt", io.BytesIO("新曲编曲草稿 v1（合成）".encode()),
+    c["mio"].call("POST", "/api/documents", files={"file": ("arrangement_v1.txt", io.BytesIO("新曲编曲草稿 v1".encode()),
                                                              "text/plain")},
                   data={"title": "新曲编曲稿", "visibility": "department", "category_id": str(dcat), "keywords": "编曲,新曲"})
-    c["nodoka"].call("POST", "/api/documents", files={"file": ("handbook.md", io.BytesIO("# 员工手册（合成）\n准时喝茶。".encode()),
+    c["nodoka"].call("POST", "/api/documents", files={"file": ("handbook.md", io.BytesIO("# 员工手册\n准时喝茶。".encode()),
                                                                 "text/markdown")},
                      data={"title": "员工手册", "visibility": "public", "keywords": "制度"})
 

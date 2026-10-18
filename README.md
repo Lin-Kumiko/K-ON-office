@@ -24,17 +24,7 @@ backend\.venv\Scripts\python.exe scripts\start.py
 
 打开 http://localhost:5173 ：不登录也能浏览公开内容；点“注册”用用户名和密码创建账号，再登录即可使用。管理功能用超级管理员 `ui` 登录。
 
-## 1. 环境要求
-
-| 项目 | 已验证版本 | 说明 |
-| --- | --- | --- |
-| Windows | 11 Pro 22631 | |
-| Python | 3.14.3 | 依赖装入 `backend/.venv`，不写入系统 site-packages |
-| Node.js / npm | 24.19.0 / 11.17.0 | 依赖装入 `frontend/node_modules` |
-| SQLite | 3.50.4（Python 内置） | 无需安装数据库服务 |
-| Google Chrome | 本机已安装 | 仅 E2E 使用（Playwright `channel: chrome`，不下载浏览器） |
-
-## 2. 安装隔离依赖
+## 1. 安装隔离依赖
 
 ```powershell
 # 后端（项目根目录执行）
@@ -51,7 +41,7 @@ cd ..
 
 > npm 11 默认不执行依赖的安装脚本（esbuild、vue-demi 会提示 allow-scripts）。已验证不执行这些脚本时 Vite/esbuild 均可正常工作，无需额外授权。
 
-## 3. 初始化开发数据库
+## 2. 初始化开发数据库
 
 ```powershell
 # 为所有种子账号设置同一个初始密码（8-64 位，含字母和数字）；不设置则交互式隐藏输入
@@ -65,11 +55,11 @@ backend\.venv\Scripts\python.exe scripts\init_db.py
 可选：通过**真实 HTTP API** 生成演示业务数据（打卡、请假、报销、出差、会议、公告、文档、招聘、转正、绩效、薪资）：
 
 ```powershell
-# 先启动后端（见第 4 节），再执行
+# 先启动后端（见第 3 节），再执行
 backend\.venv\Scripts\python.exe scripts\demo_data.py --base http://127.0.0.1:8000
 ```
 
-## 4. 启动
+## 3. 启动
 
 ```powershell
 # 开发模式：API http://127.0.0.1:8000（文档 /docs），前端 http://localhost:5173（/api 代理到 8000）
@@ -97,7 +87,7 @@ cd frontend; npm run dev
 | `DOE_SIMULATION_MODE` | `true` | 是否允许普通员工使用“模拟打卡”指定时间 |
 | `DOE_SEED_PASSWORD` | — | 仅 `init_db.py` / `demo_data.py` 使用 |
 
-## 5. 账号（合成）
+## 4. 账号（合成）
 
 | 用户名 | 姓名 | 部门 / 角色 | 典型用途 |
 | --- | --- | --- | --- |
@@ -131,7 +121,7 @@ cd frontend; npm run dev
 backend\.venv\Scripts\python.exe scripts\reset_password.py --all     # 或指定用户名，如 ui
 ```
 
-## 6. 测试
+## 5. 测试
 
 ```powershell
 # 后端：API（应用内 HTTPX）、真实网络链路与并发、数据库、契约、安全、异常恢复（约 3 分钟）
@@ -151,7 +141,7 @@ npx playwright test      # E2E：自动启动隔离后端（tests/.e2e-data）�
 
 测试数据库全部是临时 SQLite 副本（`backend/.pytest_tmp`、`tests/.e2e-data`），不会触碰 `data/dev.sqlite3`。结果与说明见 [TEST_REPORT.md](TEST_REPORT.md)。
 
-## 7. 文档索引
+## 6. 文档索引
 
 | 文件 | 内容 |
 | --- | --- |

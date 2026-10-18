@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .core import timeutil
-from .core.permissions import DEFAULT_ROLES, PERMISSIONS
+from .core.permissions import ALL_CODES, DEFAULT_ROLES, PERMISSIONS
 from .core.security import hash_password
 from .models import (AnnouncementCategory, AttendanceRule, Department, DocCategory, Employee, ExpenseCategory,
                      Holiday, JobHistory, LeaveType, MeetingRoom, Permission, Position, Role, SalaryStructure,
@@ -183,27 +183,40 @@ def workflow_graphs() -> list[dict]:
     ]
 
 
+# Account / permission administration stays with real administrators, so a shared trial password can
+# never lock people out, take over accounts or grant itself more rights.
+GUEST_EXCLUDED = {"user:manage", "role:manage", "settings:manage"}
 GUEST_ROLE = {
     "code": "guest", "name": "体验访客", "data_scope": "all",
-    "description": "公开体验账号：可浏览全公司数据（敏感字段脱敏）并发起个人申请，无任何管理权限",
-    "permissions": DEFAULT_ROLES["employee"]["permissions"] + ["employee:read", "report:view"],
+    "description": "公开体验账号：可使用全部业务与管理功能（人事、考勤、财务、薪资、流程设计、流程监控、审计查看），"
+                   "但不能管理用户、角色权限和系统设置",
+    "permissions": [c for c in ALL_CODES if c not in GUEST_EXCLUDED],
 }
+
+
+def sync_guest_role(db: Session) -> Role:
+    """Create the guest role or bring its permission set / description up to date (idempotent)."""
+    role = db.scalar(select(Role).where(Role.code == GUEST_ROLE["code"]))
+    perms = list(db.scalars(select(Permission).where(Permission.code.in_(GUEST_ROLE["permissions"]))))
+    if role is None:
+        role = Role(code=GUEST_ROLE["code"], name=GUEST_ROLE["name"], is_system=True)
+        db.add(role)
+    role.description = GUEST_ROLE["description"]
+    role.data_scope = GUEST_ROLE["data_scope"]
+    role.permissions = perms
+    db.flush()
+    return role
 
 
 def seed_test_account(db: Session, password: str, iterations: int, username: str = "test") -> int | None:
     """Create the shared trial account (role guest, employee in 音乐制作部 reporting to 秋山澪).
 
-    Idempotent: returns None when the account already exists. Never grants management permissions,
-    so sharing its password does not expose administration or approval of other people's requests."""
+    Idempotent: when the account already exists only the guest role is synchronised and None is returned.
+    The guest role is not used by any approval strategy, so the trial account never changes who has to
+    approve existing flows; it can still take over a task explicitly through workflow monitoring."""
+    role = sync_guest_role(db)
     if db.scalar(select(User.id).where(User.username == username)) is not None:
         return None
-    role = db.scalar(select(Role).where(Role.code == GUEST_ROLE["code"]))
-    if role is None:
-        perms = list(db.scalars(select(Permission).where(Permission.code.in_(GUEST_ROLE["permissions"]))))
-        role = Role(code=GUEST_ROLE["code"], name=GUEST_ROLE["name"], description=GUEST_ROLE["description"],
-                    data_scope=GUEST_ROLE["data_scope"], is_system=True, permissions=perms)
-        db.add(role)
-        db.flush()
     music = db.scalar(select(Department).where(Department.code == "MUSIC"))
     mio = db.scalar(select(Employee).where(Employee.employee_no == "HTT0002"))
     if music is None:

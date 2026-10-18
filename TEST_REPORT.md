@@ -14,9 +14,9 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 | # | 命令（目录） | 结果 |
 | --- | --- | --- |
-| 1 | `.venv\Scripts\python.exe -m pytest --cov=app`（backend） | **189 passed, 1 deselected（slow）**，175.6s；语句覆盖率 **91%**（7086 行，未覆盖 624） |
+| 1 | `.venv\Scripts\python.exe -m pytest`（backend，体验账号权限调整后的最新完整回归） | **194 passed, 1 deselected（slow）**，151.2s；上一轮带覆盖率运行为 189 passed、语句覆盖率 **91%** |
 | 2 | `.venv\Scripts\python.exe -m pytest tests/test_live_network.py -m live`（backend，新增链路后单独复跑） | **11 passed** |
-| 2b | `.venv\Scripts\python.exe -m pytest tests/test_trial_account.py tests/test_smoke.py`（新增体验账号后） | **3 passed**（体验账号：浏览/申请可用，管理接口与他人任务 403，密码复用被拒绝，重复创建幂等） |
+| 2b | `.venv\Scripts\python.exe -m pytest tests/test_trial_account.py` | **4 passed**（体验账号：广泛业务与管理权限可用；用户管理、角色权限、系统设置 403；不改变审批人；可经流程监控改派后审批；密码复用被拒绝；重复执行同步权限） |
 | 3 | `.venv\Scripts\python.exe -m pytest tests/test_performance.py -m slow -s`（backend） | **1 passed**，结果见第 5 节与 `tests/performance.json` |
 | 4 | `.venv\Scripts\ruff.exe check app tests ../scripts --select F,E9,B`（backend） | All checks passed（已修复 15 处未使用导入/变量等） |
 | 5 | `.venv\Scripts\python.exe -m compileall -q app ../scripts` | 通过 |
@@ -76,11 +76,11 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 ## 6. 最终验收运行
 
-最后一次代码修改（后端 lint 修正、新增 live 用例）之后按顺序重新执行：
+最后一次代码修改（体验账号权限放宽、菜单“任一权限”判断）之后按顺序重新执行：
 
 | 检查 | 结果 | 日志 |
 | --- | --- | --- |
-| 后端完整回归 + 覆盖率 | 189 passed，91% | `tests/backend-last-run.log` |
+| 后端完整回归（体验账号权限调整后） | 194 passed | `tests/backend-last-run.log` |
 | 真实网络 / 并发子集（含新增三条链路） | 11 passed | 命令行输出 |
 | 前端类型检查 / Vitest / 构建 | 0 错误 / 14 passed / 成功 | `tests/frontend-final.log` |
 | Playwright E2E | 7 passed，0 失败，0 跳过 | `tests/e2e-results/last-run.log`、`report.json` |

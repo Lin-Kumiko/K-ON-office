@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..core import timeutil
 from ..core.deps import CurrentUser, get_db, require, scope_department_ids
-from ..core.permissions import MENUS
+from ..core.permissions import MENUS, menu_allowed
 from ..models import (Announcement, AnnouncementRead, Department, Employee, ExpenseCategory,
                       ExpenseClaim, ExpenseItem, LeaveBalance, LeaveRequest, LeaveType, MeetingBooking, MeetingRoom,
                       Notification, PerformanceReview, Schedule, WfInstance, WfTask)
@@ -104,7 +104,7 @@ def summary(cu: CurrentUser = Depends(require("dashboard:view")), db: Session = 
             LeaveRequest.status == "approved", LeaveRequest.start_date <= today, LeaveRequest.end_date >= today))
         stats["running_instances"] = db.scalar(select(func.count()).select_from(WfInstance).where(
             WfInstance.status == "running"))
-    quick = [m for m in MENUS if cu.has(m["perm"]) and m["key"] in
+    quick = [m for m in MENUS if menu_allowed(cu.has, m) and m["key"] in
              ("leave", "expense", "attendance", "meeting", "travel", "documents", "approvals")]
     return {"user": {"name": cu.user.display_name, "employee_name": cu.employee.name if cu.employee else None},
             "stats": stats, "todo": todo, "my_applications": my_apps, "announcements": announcements,

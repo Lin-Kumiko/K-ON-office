@@ -12,7 +12,7 @@ from ..core import timeutil
 from ..core.common import audit
 from ..core.deps import CurrentUser, build_current_user, current_user, get_db
 from ..core.errors import AppError, Forbidden, NotFound, Unauthorized, ValidationFailed
-from ..core.permissions import MENUS
+from ..core.permissions import MENUS, menu_allowed
 from ..core.security import (hash_password, new_token, token_digest, validate_password_strength, verify_password)
 from ..models import Department, LoginLog, Position, User, UserSession
 from .common import ERRORS, Msg
@@ -68,7 +68,7 @@ def me_payload(db: Session, cu: CurrentUser) -> MeOut:
                               manager_id=emp.manager_id, status=emp.status)
     perms = sorted(cu.permissions) if not cu.is_admin else sorted(
         {p.code for r in cu.user.roles for p in r.permissions} | cu.permissions)
-    menus = [m for m in MENUS if cu.has(m["perm"])]
+    menus = [m for m in MENUS if menu_allowed(cu.has, m)]
     return MeOut(id=cu.user.id, username=cu.user.username, display_name=cu.user.display_name, email=cu.user.email,
                  must_change_password=cu.user.must_change_password, roles=sorted(cu.role_codes),
                  role_names=[r.name for r in cu.user.roles], permissions=perms, data_scope=cu.data_scope,

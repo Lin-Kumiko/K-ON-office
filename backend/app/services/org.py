@@ -114,7 +114,7 @@ def default_role(db: Session, code: str = "employee") -> Role:
 def reassign_pending_tasks(db: Session, user_id: int, fallback_user_id: int | None, operator_id: int | None,
                            reason: str) -> int:
     """Move pending workflow tasks of an unavailable user to a fallback approver."""
-    from ..workflow.engine import _role_users  # noqa: WPS433
+    from ..workflow.engine import _role_users
     tasks = db.scalars(select(WfTask).where(WfTask.assignee_id == user_id, WfTask.status == "pending")).all()
     moved = 0
     for t in tasks:

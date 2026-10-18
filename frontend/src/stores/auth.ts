@@ -11,7 +11,7 @@ export interface Me {
   role_names: string[]
   permissions: string[]
   data_scope: string
-  menus: { key: string; title: string; perm: string }[]
+  menus: { key: string; title: string; perm: string | string[] }[]
   employee: {
     id: number
     employee_no: string
@@ -34,6 +34,11 @@ export const useAuth = defineStore('auth', {
     can(perm: string): boolean {
       if (!this.me) return false
       return this.me.roles.includes('admin') || this.me.permissions.includes(perm)
+    },
+    /** true when the user holds at least one of the permissions (a single code or a list) */
+    canAny(perm: string | string[] | undefined): boolean {
+      if (!perm) return true
+      return (Array.isArray(perm) ? perm : [perm]).some((p) => this.can(p))
     },
     async login(username: string, password: string) {
       const res = await api.post<{ token: string; user: Me }>('/api/auth/login', { username, password })

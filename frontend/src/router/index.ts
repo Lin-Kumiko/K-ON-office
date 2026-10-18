@@ -19,7 +19,7 @@ export const appRoutes: RouteRecordRaw[] = [
   { path: '/payroll', name: 'payroll', component: () => import('@/views/Payroll.vue'), meta: { title: '模拟薪资', perm: 'payroll:self', icon: 'Wallet' } },
   { path: '/workflow', name: 'workflow', component: () => import('@/views/WorkflowDesigner.vue'), meta: { title: '流程设计', perm: 'workflow:manage', icon: 'Share' } },
   { path: '/reports', name: 'reports', component: () => import('@/views/Reports.vue'), meta: { title: '统计报表', perm: 'report:view', icon: 'PieChart' } },
-  { path: '/system', name: 'system', component: () => import('@/views/System.vue'), meta: { title: '系统与权限', perm: 'user:manage', icon: 'Setting' } },
+  { path: '/system', name: 'system', component: () => import('@/views/System.vue'), meta: { title: '系统与权限', perm: ['user:manage', 'role:manage', 'audit:read', 'settings:manage'], icon: 'Setting' } },
   { path: '/profile', name: 'profile', component: () => import('@/views/Profile.vue'), meta: { title: '个人中心', hidden: true } },
   { path: '/notifications', name: 'notifications', component: () => import('@/views/Notifications.vue'), meta: { title: '通知历史', hidden: true } },
   { path: '/403', name: 'forbidden', component: () => import('@/views/Forbidden.vue'), meta: { title: '无权限', hidden: true } },
@@ -45,10 +45,10 @@ router.beforeEach(async (to) => {
     }
   }
   if (auth.me?.must_change_password && to.name !== 'profile') return { name: 'profile', query: { force: '1' } }
-  const perm = to.meta.perm as string | undefined
-  if (perm && !auth.can(perm)) {
+  const perm = to.meta.perm as string | string[] | undefined
+  if (perm && !auth.canAny(perm)) {
     // employees without attendance:read still have their own attendance view through punch permission
-    if (!(to.name === 'attendance' && auth.can('attendance:punch'))) return { name: 'forbidden', query: { need: perm } }
+    if (!(to.name === 'attendance' && auth.can('attendance:punch'))) return { name: 'forbidden', query: { need: Array.isArray(perm) ? perm.join(' / ') : perm } }
   }
   return true
 })

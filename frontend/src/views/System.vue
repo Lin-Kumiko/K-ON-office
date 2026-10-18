@@ -3,7 +3,7 @@
     <div class="page-head"><div><h2>系统与权限</h2><div class="sub">RBAC：角色 = 菜单/接口权限 + 数据范围（本人 / 本部门及下级 / 全部）。所有校验在后端执行</div></div></div>
     <div class="card">
       <el-tabs v-model="tab" @tab-change="load">
-        <el-tab-pane label="用户" name="users" />
+        <el-tab-pane v-if="auth.can('user:manage')" label="用户" name="users" />
         <el-tab-pane v-if="auth.can('role:manage')" label="角色与权限" name="roles" />
         <el-tab-pane v-if="auth.can('audit:read')" label="审计日志" name="audit" />
         <el-tab-pane v-if="auth.can('audit:read')" label="登录日志" name="logins" />
@@ -141,7 +141,9 @@ import StatusTag from '@/components/StatusTag.vue'
 
 const SCOPE: Record<string, string> = { self: '本人', department: '本部门及下级', all: '全部' }
 const auth = useAuth()
-const tab = ref('users')
+const TAB_PERMS: [string, string][] = [['users', 'user:manage'], ['roles', 'role:manage'], ['audit', 'audit:read'],
+  ['settings', 'settings:manage']]
+const tab = ref(TAB_PERMS.find(([, p]) => auth.can(p))?.[0] ?? 'users') // first tab the user may open
 const uq = ref('')
 const urole = ref('')
 const aq = ref('')
@@ -162,7 +164,7 @@ const roleName = (c: string) => roles.value.find((r) => r.code === c)?.name || c
 const permGroups = computed(() => perms.value.reduce((m: Record<string, any[]>, p) => ((m[p.group] ||= []).push(p), m), {}))
 
 async function load() {
-  roles.value = await api.get('/api/roles')
+  if (auth.can('user:manage') || auth.can('role:manage')) roles.value = await api.get('/api/roles')
   if (tab.value === 'users') users.load()
   if (tab.value === 'roles') perms.value = await api.get('/api/permissions')
   if (tab.value === 'audit') audit.load(1)

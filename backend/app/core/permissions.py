@@ -75,7 +75,7 @@ DEFAULT_ROLES: dict[str, dict] = {
                     "description": "会议室、公告与文档"},
 }
 
-# Menu entries (frontend route name -> required permission). The API returns the
+# Menu entries (frontend route name -> required permission, or a list meaning "any of"). The API returns the
 # filtered list so the UI can render navigation; the backend still checks every call.
 MENUS: list[dict] = [
     {"key": "dashboard", "title": "工作台", "perm": "dashboard:view"},
@@ -95,5 +95,11 @@ MENUS: list[dict] = [
     {"key": "payroll", "title": "模拟薪资", "perm": "payroll:self"},
     {"key": "workflow", "title": "流程设计", "perm": "workflow:manage"},
     {"key": "reports", "title": "统计报表", "perm": "report:view"},
-    {"key": "system", "title": "系统与权限", "perm": "user:manage"},
+    {"key": "system", "title": "系统与权限", "perm": ["user:manage", "role:manage", "audit:read", "settings:manage"]},
 ]
+
+
+def menu_allowed(has, menu: dict) -> bool:
+    """`has` is a permission predicate (e.g. CurrentUser.has); list perms mean "any of"."""
+    perm = menu["perm"]
+    return any(has(p) for p in (perm if isinstance(perm, list) else [perm]))

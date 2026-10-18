@@ -30,7 +30,7 @@ const route = useRoute()
 const active = computed(() => route.path)
 const menus = computed(() =>
   appRoutes
-    .filter((r) => !r.meta?.hidden && (!r.meta?.perm || auth.can(r.meta.perm as string) ||
+    .filter((r) => !r.meta?.hidden && (auth.canAny(r.meta?.perm as string | string[] | undefined) ||
       (r.name === 'attendance' && auth.can('attendance:punch'))))
     .map((r) => ({ path: r.path, name: r.name as string, title: r.meta?.title as string, icon: r.meta?.icon as string })),
 )

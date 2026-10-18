@@ -16,7 +16,7 @@ def test_login_failures_lockout_and_logs(client, as_user, sql):
     err(client.post("/api/auth/login", json={"username": "mika", "password": TEST_PASSWORD}), 423, "ACCOUNT_LOCKED")
     rows = sql("SELECT success, reason FROM login_logs WHERE username='mika' ORDER BY id")
     assert [r[1] for r in rows][-2:] == ["bad_password", "locked"]
-    admin = as_user("saito")
+    admin = as_user("ui")
     uid = next(u for u in ok(admin.get("/api/users?q=mika"))["items"])["id"]
     assert ok(admin.get(f"/api/users/{uid}"))["locked"] is True
     ok(admin.post(f"/api/users/{uid}/unlock"))
@@ -56,7 +56,7 @@ def test_change_password_rules(client):
 
 
 def test_disabled_account(as_user, client):
-    admin = as_user("saito")
+    admin = as_user("ui")
     mika = login(client, "mika")
     uid = ok(mika.get("/api/auth/me"))["id"]
     ok(admin.post(f"/api/users/{uid}/status", json={"status": "disabled"}))
@@ -138,7 +138,7 @@ def test_sql_injection_in_search_is_inert(as_user, sql, q):
 
 
 def test_xss_payload_stored_as_plain_text(as_user):
-    admin = as_user("saito")
+    admin = as_user("ui")
     payload = "<script>alert('mio')</script><img src=x onerror=alert(1)>"
     a = ok(admin.post("/api/announcements", json={"title": payload[:100], "content": payload}), 201)
     assert ok(admin.get(f"/api/announcements/{a['id']}"))["content"] == payload  # returned verbatim as JSON data
@@ -182,7 +182,7 @@ def test_input_validation_errors_are_structured(as_user):
 
 
 def test_role_and_user_admin_guards(as_user):
-    admin, hr = as_user("saito"), as_user("nodoka")
+    admin, hr = as_user("ui"), as_user("nodoka")
     yui_id = ok(as_user("yui").get("/api/auth/me"))["id"]
     err(hr.put(f"/api/users/{yui_id}/roles", json={"role_codes": ["employee", "admin"]}), 403)  # hr cannot grant admin
     ok(hr.put(f"/api/users/{yui_id}/roles", json={"role_codes": ["employee", "manager"]}))

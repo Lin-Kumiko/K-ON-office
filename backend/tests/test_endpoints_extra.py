@@ -187,7 +187,7 @@ def test_travel_and_expense_edit_paths(as_user):
 
 # ------------------------------------------------------------------ admin catalogs
 def test_leave_types_users_and_roles(as_user, sql):
-    hr, admin = as_user("nodoka"), as_user("saito")
+    hr, admin = as_user("nodoka"), as_user("ui")
     t = ok(hr.post("/api/leave/types", json={"code": "study", "name": "学习假", "default_hours": 16}), 201)
     err(hr.post("/api/leave/types", json={"code": "study", "name": "dup"}), 409)
     err(hr.put(f"/api/leave/types/{t['id']}", json={"code": "other", "name": "x"}), 422, "IMMUTABLE_FIELD")

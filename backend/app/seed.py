@@ -1,4 +1,4 @@
-"""Base synthetic data for 放课后茶会株式会社 (Houkago Tea Time Inc.).
+"""Base synthetic data for 放学后茶会株式会社 (Houkago Tea Time Inc.).
 
 Everything here is fictional/synthetic. Only *base* data (org, accounts, rules, catalogs,
 workflow definitions) is inserted directly; business documents are created through the real
@@ -12,14 +12,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .core import timeutil
-from .core.permissions import ALL_CODES, DEFAULT_ROLES, PERMISSIONS
+from .core.permissions import DEFAULT_ROLES, PERMISSIONS
 from .core.security import hash_password
 from .models import (AnnouncementCategory, AttendanceRule, Department, DocCategory, Employee, ExpenseCategory,
                      Holiday, JobHistory, LeaveType, MeetingRoom, Permission, Position, Role, SalaryStructure,
                      SystemSetting, User, WfDefinition, WfDefinitionVersion)
 from .services import leave as leave_svc
 
-COMPANY = "放课后茶会株式会社"
+COMPANY = "放学后茶会株式会社"
 
 DEPARTMENTS = [
     # code, name, parent_code, description
@@ -30,7 +30,7 @@ DEPARTMENTS = [
     ("FIN", "财务部", "HTT", "报销审核与模拟薪资"),
     ("HR", "人事部", "HTT", "招聘、入职、考勤与绩效"),
     ("COSTUME", "服装设计部", "HTT", "演出服装设计与制作"),
-    ("IT", "信息系统部", "HTT", "系统运维（由琴吹家执事兼任）"),
+    ("IT", "信息系统部", "HTT", "系统运维（由平泽忧负责）"),
 ]
 
 POSITIONS = [
@@ -53,15 +53,15 @@ PEOPLE = [
     ("himeko", "立花姬子", "女", "HR", "HRS", "nodoka", ["employee", "hr"], date(2025, 4, 1), "regular"),
     ("sawako", "山中佐和子", "女", "COSTUME", "MGR", "ritsu", ["employee", "manager"], date(2024, 4, 1), "regular"),
     ("mika", "佐伯三花", "女", "COSTUME", "DESIGN", "sawako", ["employee"], date(2025, 7, 1), "regular"),
-    ("saito", "斋藤（琴吹家执事）", "男", "IT", "SYSADM", "mugi", ["employee", "admin"], date(2024, 4, 1), "regular"),
+    ("ui", "平泽忧", "女", "IT", "SYSADM", "mugi", ["employee", "admin"], date(2024, 4, 1), "regular"),
 ]
 
 DEPT_MANAGERS = {"HTT": "ritsu", "MUSIC": "mio", "LIVE": "yui", "TEA": "mugi", "FIN": "megumi", "HR": "nodoka",
-                 "COSTUME": "sawako", "IT": "saito"}
+                 "COSTUME": "sawako", "IT": "ui"}
 
 BASE_SALARY = {"ritsu": 3200000, "mio": 2200000, "yui": 1800000, "azusa": 1200000, "ichigo": 1300000,
                "mugi": 2200000, "megumi": 2000000, "fuuko": 1300000, "nodoka": 2100000, "himeko": 1250000,
-               "sawako": 2000000, "mika": 1200000, "saito": 2500000}  # cents
+               "sawako": 2000000, "mika": 1200000, "ui": 2500000}  # cents
 
 LEAVE_TYPES = [
     ("annual", "年假", True, True, 40, "每年 5 天，按小时计（半天 = 4 小时）"),
@@ -78,7 +78,7 @@ HOLIDAYS_2026 = [
     ("2026-05-01", "劳动节", "holiday"), ("2026-06-19", "端午节", "holiday"),
     ("2026-10-01", "国庆节", "holiday"), ("2026-10-02", "国庆节", "holiday"), ("2026-10-05", "国庆节", "holiday"),
     ("2026-10-06", "国庆节", "holiday"), ("2026-10-07", "国庆节", "holiday"),
-    ("2026-10-10", "国庆调休上班", "workday"), ("2026-11-27", "放课后茶会成立纪念日", "holiday"),
+    ("2026-10-10", "国庆调休上班", "workday"), ("2026-11-27", "放学后茶会成立纪念日", "holiday"),
 ]
 
 
@@ -183,63 +183,6 @@ def workflow_graphs() -> list[dict]:
     ]
 
 
-# Account / permission administration stays with real administrators, so a shared trial password can
-# never lock people out, take over accounts or grant itself more rights.
-GUEST_EXCLUDED = {"user:manage", "role:manage", "settings:manage"}
-GUEST_ROLE = {
-    "code": "guest", "name": "体验访客", "data_scope": "all",
-    "description": "公开体验账号：可使用全部业务与管理功能（人事、考勤、财务、薪资、流程设计、流程监控、审计查看），"
-                   "但不能管理用户、角色权限和系统设置",
-    "permissions": [c for c in ALL_CODES if c not in GUEST_EXCLUDED],
-}
-
-
-def sync_guest_role(db: Session) -> Role:
-    """Create the guest role or bring its permission set / description up to date (idempotent)."""
-    role = db.scalar(select(Role).where(Role.code == GUEST_ROLE["code"]))
-    perms = list(db.scalars(select(Permission).where(Permission.code.in_(GUEST_ROLE["permissions"]))))
-    if role is None:
-        role = Role(code=GUEST_ROLE["code"], name=GUEST_ROLE["name"], is_system=True)
-        db.add(role)
-    role.description = GUEST_ROLE["description"]
-    role.data_scope = GUEST_ROLE["data_scope"]
-    role.permissions = perms
-    db.flush()
-    return role
-
-
-def seed_test_account(db: Session, password: str, iterations: int, username: str = "test") -> int | None:
-    """Create the shared trial account (role guest, employee in 音乐制作部 reporting to 秋山澪).
-
-    Idempotent: when the account already exists only the guest role is synchronised and None is returned.
-    The guest role is not used by any approval strategy, so the trial account never changes who has to
-    approve existing flows; it can still take over a task explicitly through workflow monitoring."""
-    role = sync_guest_role(db)
-    if db.scalar(select(User.id).where(User.username == username)) is not None:
-        return None
-    music = db.scalar(select(Department).where(Department.code == "MUSIC"))
-    mio = db.scalar(select(Employee).where(Employee.employee_no == "HTT0002"))
-    if music is None:
-        raise RuntimeError("缺少基础组织数据，请先运行 init_db.py")
-    user = User(username=username, display_name="体验账号", email=f"{username}@htt.example",
-                password_hash=hash_password(password, iterations), status="active", must_change_password=False,
-                roles=[role])
-    db.add(user)
-    db.flush()
-    from .services.org import next_employee_no
-    today = timeutil.today()
-    emp = Employee(employee_no=next_employee_no(db), name="体验用户", gender="其他", email=f"{username}@htt.example",
-                   department_id=music.id, manager_id=mio.id if mio else None, hire_date=today, status="regular",
-                   regularized_date=today, user_id=user.id, remark="公开体验账号（合成数据）")
-    db.add(emp)
-    db.flush()
-    db.add(JobHistory(employee_id=emp.id, change_type="onboard", effective_date=today, to_department_id=music.id,
-                      to_manager_id=emp.manager_id, to_status="regular", reason="创建体验账号"))
-    leave_svc.ensure_year_balances(db, emp, today.year, None)
-    db.flush()
-    return user.id
-
-
 def seed_base(db: Session, password: str, iterations: int, year: int | None = None) -> dict:
     """Insert base data into an empty database. Returns {username: user_id}."""
     if db.scalar(select(Role.id).limit(1)) is not None:
@@ -336,7 +279,7 @@ def seed_base(db: Session, password: str, iterations: int, year: int | None = No
                              ("attendance.simulation_note", "模拟打卡：可指定打卡时间用于测试与演示", "模拟打卡说明")]:
         db.add(SystemSetting(key=key, value=value, description=desc))
 
-    admin = users["saito"]
+    admin = users["ui"]
     now = timeutil.now()
     for wf in workflow_graphs():
         d = WfDefinition(key=wf["key"], name=wf["name"], business_type=wf["business_type"], status="active",

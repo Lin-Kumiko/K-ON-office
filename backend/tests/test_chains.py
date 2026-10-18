@@ -24,8 +24,8 @@ def test_onboarding_chain_creates_employee_account_and_todos(as_user, sql):
     req = ok(hr.post("/api/recruitment/requisitions", json={
         "title": "茶点专员", "department_id": tea["id"], "position_id": pos["id"], "headcount": 1}), 201)
     cand = ok(hr.post("/api/recruitment/candidates", json={
-        "requisition_id": req["id"], "name": "平泽忧", "gender": "女", "email": "ui@htt.example",
-        "phone": "13900000001", "source": "内推（唯的妹妹）"}), 201)
+        "requisition_id": req["id"], "name": "奥田直", "gender": "女", "email": "nao@htt.example",
+        "phone": "13900000001", "source": "内推（梓的学妹）"}), 201)
     err(hr.post("/api/recruitment/offers", json={"candidate_id": cand["id"], "department_id": tea["id"],
                                                 "salary": "9000.00", "hire_date": "2026-11-02"}), 409)
     mugi_uid = ok(as_user("mugi").get("/api/auth/me"))["id"]
@@ -47,9 +47,9 @@ def test_onboarding_chain_creates_employee_account_and_todos(as_user, sql):
 
     # chain proper: HR login -> onboarding request -> workflow -> dept manager -> HR
     onb = ok(hr.post("/api/onboarding", json={
-        "candidate_id": cand["id"], "name": "平泽忧", "gender": "女", "email": "ui@htt.example",
+        "candidate_id": cand["id"], "name": "奥田直", "gender": "女", "email": "nao@htt.example",
         "phone": "13900000001", "department_id": tea["id"], "position_id": pos["id"], "hire_date": "2026-11-02",
-        "probation_months": 3, "create_account": True, "username": "ui", "role_codes": ["employee"],
+        "probation_months": 3, "create_account": True, "username": "nao", "role_codes": ["employee"],
         "base_salary": "9000.00"}), 201)
     assert onb["status"] == "draft" and onb["employee_id"] is None
     onb = ok(hr.post(f"/api/onboarding/{onb['id']}/submit"))
@@ -58,15 +58,15 @@ def test_onboarding_chain_creates_employee_account_and_todos(as_user, sql):
     err(hr.post(f"/api/onboarding/{onb['id']}/submit"), 409)
     mugi = as_user("mugi")
     ok(mugi.post(f"/api/workflow/tasks/{_task_for(mugi, onb['instance_id'])['id']}/approve", json={"comment": "确认"}))
-    assert sql("SELECT count(*) FROM employees WHERE email='ui@htt.example'")[0][0] == 0  # not before final approval
+    assert sql("SELECT count(*) FROM employees WHERE email='nao@htt.example'")[0][0] == 0  # not before final approval
     t = _task_for(hr, onb["instance_id"])
     ok(hr.post(f"/api/workflow/tasks/{t['id']}/approve", json={"comment": "入职手续齐全"}))
 
     final = ok(hr.get(f"/api/onboarding/{onb['id']}"))
     assert final["status"] == "approved" and final["employee_id"] and final["user_id"]
     emp = ok(hr.get(f"/api/employees/{final['employee_id']}"))
-    assert emp["name"] == "平泽忧" and emp["department_id"] == tea["id"] and emp["status"] == "probation"
-    assert emp["username"] == "ui" and emp["manager_name"] == "琴吹紬"
+    assert emp["name"] == "奥田直" and emp["department_id"] == tea["id"] and emp["status"] == "probation"
+    assert emp["username"] == "nao" and emp["manager_name"] == "琴吹紬"
     roles = sql("SELECT r.code FROM user_roles ur JOIN roles r ON r.id=ur.role_id WHERE ur.user_id=?",
                 id=final["user_id"])
     assert [r[0] for r in roles] == ["employee"]
@@ -80,16 +80,16 @@ def test_onboarding_chain_creates_employee_account_and_todos(as_user, sql):
     hist = ok(hr.get(f"/api/employees/{final['employee_id']}/history"))
     assert hist[0]["change_type"] == "onboard" and hist[0]["ref_type"] == "onboarding"
     # the new account can be activated by an admin reset and then must change password
-    ok(as_user("saito").post(f"/api/users/{final['user_id']}/reset-password", json={"new_password": "UiTea2026x"}))
+    ok(as_user("ui").post(f"/api/users/{final['user_id']}/reset-password", json={"new_password": "UiTea2026x"}))
     from tests.conftest import login
-    ui = login(hr.client, "ui", "UiTea2026x")
-    err(ui.get("/api/leave/balances"), 403, "PASSWORD_CHANGE_REQUIRED")
-    ok(ui.post("/api/auth/change-password", json={"old_password": "UiTea2026x", "new_password": "UiCake2026y"}))
-    assert ok(ui.get("/api/auth/me"))["employee"]["name"] == "平泽忧"
+    nao = login(hr.client, "nao", "UiTea2026x")
+    err(nao.get("/api/leave/balances"), 403, "PASSWORD_CHANGE_REQUIRED")
+    ok(nao.post("/api/auth/change-password", json={"old_password": "UiTea2026x", "new_password": "UiCake2026y"}))
+    assert ok(nao.get("/api/auth/me"))["employee"]["name"] == "奥田直"
 
 
 def test_onboarding_links_existing_account_without_duplicate(as_user, sql):
-    admin, hr = as_user("saito"), as_user("nodoka")
+    admin, hr = as_user("ui"), as_user("nodoka")
     u = ok(admin.post("/api/users", json={"username": "jun", "display_name": "铃木纯", "email": "jun@htt.example",
                                           "role_codes": ["employee"]}), 201)
     music = _dept(hr, "MUSIC")

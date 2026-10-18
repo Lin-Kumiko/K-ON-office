@@ -137,7 +137,7 @@ def test_transfer_task_and_admin_reassign(as_user):
     # admin re-assigns the pending task to mugi (e.g. ritsu is on vacation)
     mugi_id = ok(as_user("mugi").get("/api/auth/me"))["id"]
     err(mio.post(f"/api/workflow/tasks/{new['id']}/reassign", json={"to_user_id": mugi_id}), 403)
-    again = ok(as_user("saito").post(f"/api/workflow/tasks/{new['id']}/reassign", json={"to_user_id": mugi_id}))
+    again = ok(as_user("ui").post(f"/api/workflow/tasks/{new['id']}/reassign", json={"to_user_id": mugi_id}))
     ok(as_user("mugi").post(f"/api/workflow/tasks/{again['id']}/approve", json={}))
     hist = [h["action"] for h in ok(yui.get(f"/api/workflow/instances/{leave['instance_id']}"))["history"]]
     assert "transfer" in hist and "reassign" in hist and hist[-1] == "end"
@@ -169,7 +169,7 @@ def test_withdraw_cancel_and_illegal_transitions(as_user, sql):
 
 
 def test_new_version_does_not_change_running_instances(as_user):
-    admin, yui, mio = as_user("saito"), as_user("yui"), as_user("mio")
+    admin, yui, mio = as_user("ui"), as_user("yui"), as_user("mio")
     d = _def(admin, "travel")
     old = ok(yui.post("/api/travel?submit=true", json={"destination": "琴吹家别墅", "start_date": "2026-11-10",
                                                       "end_date": "2026-11-12", "purpose": "合宿"}), 201)
@@ -203,7 +203,7 @@ def test_new_version_does_not_change_running_instances(as_user):
 
 
 def test_disabled_definition_blocks_new_submissions_only(as_user):
-    admin, yui = as_user("saito"), as_user("yui")
+    admin, yui = as_user("ui"), as_user("yui")
     d = _def(admin, "travel")
     running = ok(yui.post("/api/travel?submit=true", json={"destination": "A", "start_date": "2026-11-10",
                                                           "end_date": "2026-11-10", "purpose": "p"}), 201)
@@ -216,7 +216,7 @@ def test_disabled_definition_blocks_new_submissions_only(as_user):
 
 
 def test_unavailable_approver_escalates_and_falls_back(as_user, sql):
-    admin, hr = as_user("saito"), as_user("nodoka")
+    admin, hr = as_user("ui"), as_user("nodoka")
     # mio (yui's manager) is disabled -> yui's request escalates to ritsu
     mio_uid = ok(as_user("mio").get("/api/auth/me"))["id"]
     ok(admin.post(f"/api/users/{mio_uid}/status", json={"status": "disabled"}))
@@ -254,7 +254,7 @@ def test_business_failure_rolls_back_approval(as_user, sql):
         ok(api.post(f"/api/workflow/tasks/{_task(api, tr['instance_id'])['id']}/approve", json={}))
     # meanwhile the target department is disabled -> approval cannot take effect
     tea = _dept(hr, "TEA")
-    admin = as_user("saito")
+    admin = as_user("ui")
     # move TEA members out first so it can be disabled
     mugi_emp = _emp(hr, "琴吹紬")
     emp = ok(hr.get(f"/api/employees/{mugi_emp['id']}"))
@@ -306,7 +306,7 @@ def test_task_visibility_and_cc(as_user):
 
 def test_amount_based_approver_strategy_at_runtime(as_user):
     """expense v2: a single approval node whose approver depends on the amount."""
-    admin, yui = as_user("saito"), as_user("yui")
+    admin, yui = as_user("ui"), as_user("yui")
     d = _def(admin, "expense")
     ok(admin.post(f"/api/workflow/definitions/{d['id']}/draft"))
     graph = {"nodes": [

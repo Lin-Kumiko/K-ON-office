@@ -3,7 +3,7 @@
     <div class="brand" :class="{ mini: collapsed }">
       <img src="/teacup.svg" alt="" class="logo" />
       <div v-if="!collapsed" class="brand-text">
-        <div class="brand-name">放课后茶会</div>
+        <div class="brand-name">放学后茶会</div>
         <div class="brand-sub">DragonOffice Enterprise</div>
       </div>
     </div>
@@ -11,7 +11,7 @@
              text-color="var(--doe-aside-text)" active-text-color="#ffd7b8">
       <el-menu-item v-for="m in menus" :key="m.path" :index="m.path" @click="$emit('navigate')" :data-test="`menu-${m.name}`">
         <el-icon><component :is="m.icon" /></el-icon>
-        <template #title>{{ m.title }}</template>
+        <template #title>{{ m.title }}<el-icon v-if="m.locked" class="lock" aria-label="需要登录"><Lock /></el-icon></template>
       </el-menu-item>
     </el-menu>
   </div>
@@ -28,11 +28,16 @@ defineEmits(['navigate'])
 const auth = useAuth()
 const route = useRoute()
 const active = computed(() => route.path)
+// Visitors see the whole system (except administration); pages they cannot open yet carry a lock and
+// ask them to log in when clicked (handled by the router guard).
 const menus = computed(() =>
   appRoutes
-    .filter((r) => !r.meta?.hidden && (auth.canAny(r.meta?.perm as string | string[] | undefined) ||
-      (r.name === 'attendance' && auth.can('attendance:punch'))))
-    .map((r) => ({ path: r.path, name: r.name as string, title: r.meta?.title as string, icon: r.meta?.icon as string })),
+    .filter((r) => !r.meta?.hidden)
+    .filter((r) => (auth.loggedIn
+      ? auth.canAny(r.meta?.perm as string | string[] | undefined) || (r.name === 'attendance' && auth.can('attendance:punch'))
+      : !r.meta?.adminOnly))
+    .map((r) => ({ path: r.path, name: r.name as string, title: r.meta?.title as string, icon: r.meta?.icon as string,
+                   locked: !auth.loggedIn && !r.meta?.visitor })),
 )
 </script>
 
@@ -68,6 +73,11 @@ const menus = computed(() =>
 .brand-sub {
   font-size: 11px;
   opacity: 0.7;
+}
+.lock {
+  margin-left: 6px;
+  opacity: 0.55;
+  font-size: 12px;
 }
 .menu {
   border-right: none;

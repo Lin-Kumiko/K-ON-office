@@ -4,9 +4,9 @@ export const PASSWORD = process.env.E2E_PASSWORD as string
 
 export async function login(page: Page, username: string, password = PASSWORD) {
   await page.goto('/login')
-  await page.getByPlaceholder('例如 yui').fill(username)
-  await page.locator('input[type=password]').fill(password)
-  await page.getByRole('button', { name: '登录' }).click()
+  await page.locator('input[data-test=auth-username]').fill(username)
+  await page.locator('input[data-test=auth-password]').fill(password)
+  await page.locator('[data-test=auth-submit]').click()
   await expect(page).toHaveURL(/\/(dashboard|profile)/)
 }
 

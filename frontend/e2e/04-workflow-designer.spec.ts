@@ -11,7 +11,7 @@ async function drag(page: Page, from: ReturnType<Page['locator']>, to: ReturnTyp
 }
 
 test('流程配置：设计器新增 HR 备案节点并发布 → 新出差单按新版本执行', async ({ page }) => {
-  await login(page, 'saito')
+  await login(page, 'ui')
   await page.goto('/workflow')
   await page.locator('[data-test=def-travel]').click()
   await page.locator('[data-test=new-draft]').click()

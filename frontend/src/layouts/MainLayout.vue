@@ -18,7 +18,11 @@
             <el-icon size="18"><Moon v-if="app.theme === 'light'" /><Sunny v-else /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-popover placement="bottom-end" :width="340" trigger="click" @show="loadNotes">
+        <template v-if="!auth.loggedIn">
+          <el-button data-test="header-login" @click="router.push({ name: 'login', query: { redirect: route.fullPath } })">登录</el-button>
+          <el-button type="primary" data-test="header-register" @click="router.push({ name: 'register' })">注册</el-button>
+        </template>
+        <el-popover v-if="auth.loggedIn" placement="bottom-end" :width="340" trigger="click" @show="loadNotes">
           <template #reference>
             <el-badge :value="app.unread" :hidden="!app.unread" :max="99" class="bell">
               <el-button text circle aria-label="通知" data-test="bell"><el-icon size="18"><Bell /></el-icon></el-button>
@@ -37,7 +41,7 @@
             <el-button link type="primary" @click="router.push('/notifications')">查看全部通知历史</el-button>
           </div>
         </el-popover>
-        <el-dropdown @command="onCommand">
+        <el-dropdown v-if="auth.loggedIn" @command="onCommand">
           <span class="user">
             <el-avatar :size="28" class="avatar">{{ initial }}</el-avatar>
             <span class="uname">{{ auth.me?.display_name }}</span>
@@ -103,14 +107,14 @@ async function onCommand(cmd: string) {
   if (cmd === 'profile') router.push('/profile')
   if (cmd === 'logout') {
     await auth.logout()
-    router.push('/login')
+    router.push('/dashboard')
   }
 }
 
 onMounted(() => {
   window.addEventListener('resize', onResize)
-  app.refreshUnread()
-  timer = window.setInterval(() => app.refreshUnread(), 30000)
+  if (auth.loggedIn) app.refreshUnread()
+  timer = window.setInterval(() => auth.loggedIn && app.refreshUnread(), 30000)
 })
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)

@@ -14,7 +14,9 @@ from ..core.deps import CurrentUser, build_current_user, current_user, get_db
 from ..core.errors import AppError, Forbidden, NotFound, Unauthorized, ValidationFailed
 from ..core.permissions import MENUS, menu_allowed
 from ..core.security import (hash_password, new_token, token_digest, validate_password_strength, verify_password)
-from ..models import Department, LoginLog, Position, User, UserSession
+from ..models import AuditLog, Department, Employee, LoginLog, Position, User, UserSession
+from ..services import leave as leave_svc
+from ..services import org
 from .common import ERRORS, Msg
 
 router = APIRouter(prefix="/api/auth", tags=["认证"], responses=ERRORS)
@@ -118,6 +120,60 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)):
     payload = LoginOut(token=token, expires_at=sess.expires_at, user=me_payload(db, cu))
     db.commit()
     return payload
+
+
+class RegisterIn(BaseModel):
+    username: str = Field(min_length=3, max_length=20, pattern=r"^[A-Za-z0-9_.-]+$",
+                          description="3-20 位字母、数字、下划线、点或短横线")
+    password: str = Field(min_length=1, max_length=64)
+
+
+class RegisterOut(BaseModel):
+    id: int
+    username: str
+    message: str
+
+
+RESERVED_USERNAMES = {"admin", "administrator", "root", "system", "superadmin", "super", "guest", "test", "null",
+                      "anonymous", "visitor"}
+
+
+@router.post("/register", response_model=RegisterOut, status_code=201,
+             summary="自助注册（仅用户名 + 密码；注册后需登录）")
+def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
+    settings = request.app.state.settings
+    if not settings.allow_registration:
+        raise Forbidden("当前未开放注册，请联系管理员", code="REGISTRATION_CLOSED")
+    username = body.username.strip()
+    if username.lower() in RESERVED_USERNAMES:
+        raise ValidationFailed("该用户名为系统保留名称，请换一个", code="USERNAME_RESERVED")
+    validate_password_strength(body.password)
+    if body.password.lower() == username.lower():
+        raise ValidationFailed("密码不能与用户名相同", code="WEAK_PASSWORD")
+    ip, ua = _client(request)
+    now = timeutil.now()
+    recent = db.scalar(select(func.count()).select_from(AuditLog).where(
+        AuditLog.action == "register", AuditLog.ip == ip, AuditLog.created_at >= now - timedelta(hours=1)))
+    if recent >= settings.register_limit_per_hour:
+        raise AppError("注册过于频繁，请一小时后再试", code="TOO_MANY_REGISTRATIONS", status_code=429)
+    org.ensure_username_free(db, username)
+    role = org.default_role(db, "employee")
+    user = User(username=username, display_name=username, password_hash=hash_password(
+        body.password, settings.password_iterations), status="active", must_change_password=False, roles=[role])
+    db.add(user)
+    db.flush()
+    dept = org.ensure_newcomer_department(db)
+    today = timeutil.today()
+    emp = Employee(employee_no=org.next_employee_no(db), name=username, department_id=dept.id, hire_date=today,
+                   status="regular", regularized_date=today, user_id=user.id, remark="自助注册")
+    db.add(emp)
+    db.flush()
+    org.add_history(db, emp, "onboard", today, operator_id=user.id, reason="自助注册")
+    leave_svc.ensure_year_balances(db, emp, today.year, None)
+    db.add(AuditLog(user_id=user.id, action="register", resource_type="user", resource_id=str(user.id),
+                    detail={"user_agent": ua}, ip=ip))
+    db.commit()
+    return RegisterOut(id=user.id, username=username, message="注册成功，请登录")
 
 
 @router.post("/logout", response_model=Msg, summary="退出登录")

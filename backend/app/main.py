@@ -28,7 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title="DragonOffice Enterprise API",
         version=API_VERSION,
-        description="放课后茶会株式会社 · OA / HRM / 工作流一体化平台（全部数据为合成数据）",
+        description="放学后茶会株式会社 · OA / HRM / 工作流一体化平台（全部数据为合成数据）",
     )
     app.state.settings = settings
     app.state.db = Database(settings.database_url)

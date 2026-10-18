@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..core import timeutil
 from ..core.common import audit, idempotent, jsonable, notify, paginate
-from ..core.deps import CurrentUser, PageParams, current_user, department_subtree, get_db, require
+from ..core.deps import require_view, viewer, CurrentUser, PageParams, current_user, department_subtree, get_db, require
 from ..core.errors import Conflict, Forbidden, InvalidState, NotFound, ValidationFailed
 from ..models import (Announcement, AnnouncementCategory, AnnouncementRead, Department, Employee, MeetingBooking,
                       MeetingRoom, Notification, Schedule, User)
@@ -38,7 +38,7 @@ class RoomOut(RoomIn):
 
 
 @router.get("/meeting/rooms", response_model=list[RoomOut], summary="会议室列表")
-def list_rooms(cu: CurrentUser = Depends(require("meeting:book")), db: Session = Depends(get_db)):
+def list_rooms(cu: CurrentUser = Depends(require_view("meeting:book", "meeting:view")), db: Session = Depends(get_db)):
     return [RoomOut.model_validate(r, from_attributes=True) for r in db.scalars(select(MeetingRoom).order_by(MeetingRoom.id))]
 
 
@@ -127,7 +127,7 @@ class AvailabilityOut(BaseModel):
 
 
 @router.get("/meeting/rooms/{room_id}/availability", response_model=AvailabilityOut, summary="查询某日占用情况")
-def availability(room_id: int, day: date, cu: CurrentUser = Depends(require("meeting:book")),
+def availability(room_id: int, day: date, cu: CurrentUser = Depends(require_view("meeting:book", "meeting:view")),
                  db: Session = Depends(get_db)):
     r = db.get(MeetingRoom, room_id)
     if r is None:
@@ -217,7 +217,7 @@ def list_bookings(scope: str = Query("mine", pattern="^(mine|all)$"), room_id: i
 
 @router.get("/meeting/calendar", response_model=list[BookingOut], summary="会议日历（有效预约）")
 def calendar_view(start: date, end: date, room_id: int | None = None,
-                  cu: CurrentUser = Depends(require("meeting:book")), db: Session = Depends(get_db)):
+                  cu: CurrentUser = Depends(require_view("meeting:book", "meeting:view")), db: Session = Depends(get_db)):
     if end < start or (end - start).days > 62:
         raise ValidationFailed("日历区间需在 62 天内", code="INVALID_RANGE")
     stmt = select(MeetingBooking).where(
@@ -343,7 +343,7 @@ def _visible_to_member(db: Session, cu: CurrentUser, a: Announcement) -> bool:
 
 
 @router.get("/announcements/categories", summary="公告分类")
-def ann_categories(cu: CurrentUser = Depends(current_user), db: Session = Depends(get_db)):
+def ann_categories(cu: CurrentUser = Depends(viewer), db: Session = Depends(get_db)):
     return [{"id": c.id, "name": c.name} for c in db.scalars(select(AnnouncementCategory).order_by(AnnouncementCategory.id))]
 
 
@@ -351,7 +351,7 @@ def ann_categories(cu: CurrentUser = Depends(current_user), db: Session = Depend
 def list_announcements(scope: str = Query("visible", pattern="^(visible|manage)$"), status: str | None = None,
                        category_id: int | None = None, q: str | None = Query(None, max_length=64),
                        unread_only: bool = False, page: PageParams = Depends(),
-                       cu: CurrentUser = Depends(require("announcement:read")), db: Session = Depends(get_db)):
+                       cu: CurrentUser = Depends(require_view("announcement:read")), db: Session = Depends(get_db)):
     stmt = select(Announcement)
     if scope == "manage":
         cu.require("announcement:manage")
@@ -408,7 +408,7 @@ def create_announcement(body: AnnouncementIn, cu: CurrentUser = Depends(require(
 
 
 @router.get("/announcements/{aid}", response_model=AnnouncementOut, summary="公告详情")
-def get_announcement(aid: int, cu: CurrentUser = Depends(require("announcement:read")), db: Session = Depends(get_db)):
+def get_announcement(aid: int, cu: CurrentUser = Depends(require_view("announcement:read")), db: Session = Depends(get_db)):
     a = _get_ann(db, cu, aid)
     read = db.get(AnnouncementRead, (a.id, cu.id)) is not None
     return ann_out(db, a, read)

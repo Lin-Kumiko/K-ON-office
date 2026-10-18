@@ -121,6 +121,7 @@ import { ElMessageBox } from 'element-plus'
 import { api } from '@/api/http'
 import { useAuth } from '@/stores/auth'
 import { act, usePaged } from '@/utils/usePaged'
+import { promptLogin } from '@/utils/loginPrompt'
 import { fmtDateTime, fmtTime, pad, thisMonth, today } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
 import PersonSelect from '@/components/PersonSelect.vue'
@@ -165,11 +166,16 @@ function shift(n: number) {
   loadCalendar()
 }
 function onTab() {
+  if (tab.value === 'mine' && !auth.loggedIn) {
+    tab.value = 'calendar'
+    return promptLogin()
+  }
   if (tab.value === 'calendar') loadCalendar()
   if (tab.value === 'mine') mine.load(1)
   if (tab.value === 'rooms') loadRooms()
 }
 function openBooking(roomId?: number) {
+  if (!auth.loggedIn) return promptLogin()
   Object.assign(book, { room_id: roomId ?? rooms.value[0]?.id, day: today(), start: '', end: '', subject: '', attendee_ids: [], note: '' })
   bookOpen.value = true
   loadAvailability()

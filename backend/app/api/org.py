@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from ..core import timeutil
 from ..core.common import audit, paginate
 from ..core.deps import (CurrentUser, PageParams, current_user, department_subtree, employee_scope_filter,
-                         ensure_can_view_employee, get_db, require)
+                         ensure_can_view_employee, get_db, require, require_view)
 from ..core.errors import Conflict, ValidationFailed
 from ..core.security import hash_password, mask_email, mask_phone, unusable_password, validate_password_strength
 from ..models import Department, DepartmentChangeLog, Employee, JobHistory, Position, Role, User
@@ -67,13 +67,13 @@ def _dept_outs(db: Session) -> list[DepartmentOut]:
 
 
 @router.get("/departments", response_model=list[DepartmentOut], summary="部门列表（扁平）")
-def list_departments(include_disabled: bool = False, cu: CurrentUser = Depends(require("org:read")),
+def list_departments(include_disabled: bool = False, cu: CurrentUser = Depends(require_view("org:read")),
                      db: Session = Depends(get_db)):
     return [d for d in _dept_outs(db) if include_disabled or d.status == "active"]
 
 
 @router.get("/departments/tree", response_model=list[DepartmentOut], summary="组织树")
-def department_tree(include_disabled: bool = False, cu: CurrentUser = Depends(require("org:read")),
+def department_tree(include_disabled: bool = False, cu: CurrentUser = Depends(require_view("org:read")),
                     db: Session = Depends(get_db)):
     nodes = {d.id: d for d in _dept_outs(db) if include_disabled or d.status == "active"}
     roots = []
@@ -192,7 +192,7 @@ class PositionOut(BaseModel):
 
 
 @router.get("/positions", response_model=list[PositionOut], summary="岗位列表")
-def list_positions(cu: CurrentUser = Depends(require("org:read")), db: Session = Depends(get_db)):
+def list_positions(cu: CurrentUser = Depends(require_view("org:read")), db: Session = Depends(get_db)):
     return [PositionOut.model_validate(p, from_attributes=True)
             for p in db.scalars(select(Position).order_by(Position.level.desc(), Position.id))]
 

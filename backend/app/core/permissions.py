@@ -51,10 +51,10 @@ _EMPLOYEE = [
 ]
 
 DEFAULT_ROLES: dict[str, dict] = {
-    "admin": {"name": "系统管理员", "data_scope": "all", "permissions": ALL_CODES,
-              "description": "拥有全部权限（琴吹家执事专用）"},
+    "admin": {"name": "超级管理员", "data_scope": "all", "permissions": ALL_CODES,
+              "description": "拥有全部权限，可管理用户、角色与系统设置（由平泽忧担任）"},
     "employee": {"name": "普通员工", "data_scope": "self", "permissions": _EMPLOYEE,
-                 "description": "放课后茶会全体成员的基础权限"},
+                 "description": "放学后茶会全体成员的基础权限"},
     "manager": {"name": "部门主管", "data_scope": "department",
                 "permissions": _EMPLOYEE + ["employee:read", "report:view"],
                 "description": "可查看本部门及下级部门数据"},

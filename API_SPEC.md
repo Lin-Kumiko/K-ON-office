@@ -6,7 +6,7 @@
 
 | 项 | 约定 |
 | --- | --- |
-| 认证 | `Authorization: Bearer <token>`（`POST /api/auth/login` 获取）。未认证 401；首次登录/被重置密码的账号在修改密码前访问 `/api/auth/*` 以外接口返回 403 `PASSWORD_CHANGE_REQUIRED` |
+| 认证 | `Authorization: Bearer <token>`（`POST /api/auth/login` 获取）。未携带令牌访问非公开接口或任何写操作返回 401 `LOGIN_REQUIRED`（“请先登录后再操作”）；令牌无效/过期返回 401 `SESSION_EXPIRED`；首次登录/被重置密码的账号在修改密码前访问 `/api/auth/*` 以外接口返回 403 `PASSWORD_CHANGE_REQUIRED` |
 | 错误结构 | `{"error": {"code": "...", "message": "中文说明", "details": ...}}` |
 | 状态码 | 200 成功 · 201 创建 · 401 未认证 · 403 无权限/数据范围外 · 404 不存在 · 409 状态冲突/重复/并发冲突 · 422 参数或业务校验失败 · 423 账号锁定 · 503 数据库繁忙（可重试） · 500 内部错误（不泄露细节） |
 | 分页 | `?page=1&page_size=20(≤200)&sort=field` 或 `sort=-field`；响应 `{items, total, page, page_size}`；非法排序字段 422 |
@@ -20,6 +20,9 @@
 
 | 方法 路径 | 权限 | 说明 / 后置条件 |
 | --- | --- | --- |
+| POST /api/auth/register | 公开 | 仅 username + password；保留名 422 USERNAME_RESERVED；重名 409 USERNAME_EXISTS；同 IP 每小时超限 429 TOO_MANY_REGISTRATIONS；关闭时 403 REGISTRATION_CLOSED；创建普通员工账号与员工档案（新成员部门），不自动登录 |
+| GET /api/public/overview | 公开 | 访客首页：公司名称标语、统计、全员公告、7 天内会议、部门人数、是否开放注册 |
+| GET 公告/组织树/岗位/文档/会议室与日历 | 公开（只读） | 访客只看到全员公告与公开文档；登录后按权限与数据范围返回 |
 | POST /api/auth/login | 公开 | 失败计数，5 次锁定 15 分钟；写 login_logs；返回 token + 当前用户（权限、菜单、员工信息） |
 | POST /api/auth/logout | 登录 | 吊销当前会话 |
 | POST /api/auth/change-password | 登录 | 校验原密码与强度；清除 must_change_password；吊销其他会话 |

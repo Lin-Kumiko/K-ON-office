@@ -1,6 +1,6 @@
 """Reset the password of local accounts in the development database (hidden input, nothing printed).
 
-    backend\\.venv\\Scripts\\python.exe scripts\\reset_password.py saito      # one account
+    backend\\.venv\\Scripts\\python.exe scripts\\reset_password.py ui         # one account
     backend\\.venv\\Scripts\\python.exe scripts\\reset_password.py --all      # every account
 The new password can also come from the DOE_NEW_PASSWORD environment variable.
 """

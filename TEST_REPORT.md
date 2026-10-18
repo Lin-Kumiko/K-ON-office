@@ -14,17 +14,17 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 | # | 命令（目录） | 结果 |
 | --- | --- | --- |
-| 1 | `.venv\Scripts\python.exe -m pytest`（backend，体验账号权限调整后的最新完整回归） | **194 passed, 1 deselected（slow）**，151.2s；上一轮带覆盖率运行为 189 passed、语句覆盖率 **91%** |
+| 1 | `.venv\Scripts\python.exe -m pytest`（backend，访客浏览 / 注册改动后的最新完整回归） | **225 passed, 1 deselected（slow）**，121.2s；此前带覆盖率运行的语句覆盖率为 **91%** |
 | 2 | `.venv\Scripts\python.exe -m pytest tests/test_live_network.py -m live`（backend，新增链路后单独复跑） | **11 passed** |
-| 2b | `.venv\Scripts\python.exe -m pytest tests/test_trial_account.py` | **4 passed**（体验账号：广泛业务与管理权限可用；用户管理、角色权限、系统设置 403；不改变审批人；可经流程监控改派后审批；密码复用被拒绝；重复执行同步权限） |
+| 2b | `.venv\Scripts\python.exe -m pytest tests/test_visitor_register.py tests/test_smoke.py tests/test_contract.py` | **100 passed**（访客只读 10 个公开接口；14 类操作返回 401 LOGIN_REQUIRED；访客只看到全员公告与公开文档；注册→登录→打卡/请假；注册校验 7 种；IP 限频与关闭开关；伪造令牌不降级为访客；全部 217 个操作的未登录行为） |
 | 3 | `.venv\Scripts\python.exe -m pytest tests/test_performance.py -m slow -s`（backend） | **1 passed**，结果见第 5 节与 `tests/performance.json` |
 | 4 | `.venv\Scripts\ruff.exe check app tests ../scripts --select F,E9,B`（backend） | All checks passed（已修复 15 处未使用导入/变量等） |
 | 5 | `.venv\Scripts\python.exe -m compileall -q app ../scripts` | 通过 |
 | 6 | Alembic `upgrade head → check → downgrade base → upgrade head`（`test_database.py`） | 通过；模型与迁移无漂移 |
 | 7 | `npx vue-tsc --noEmit`（frontend） | 通过（0 错误） |
-| 8 | `npx vitest run`（frontend） | **14 passed**（4 个文件） |
+| 8 | `npx vitest run`（frontend） | **17 passed**（新增登录/注册页：仅两个字段、表单校验、注册后跳转登录且不自动登录） |
 | 9 | `npx vite build`（frontend） | 构建成功（`frontend/dist`） |
-| 10 | `npx playwright test`（frontend，系统 Chrome，headless） | **7 passed**（26.5s） |
+| 10 | `npx playwright test`（frontend，系统 Chrome，headless） | **8 passed**（30.5s，新增访客浏览 → 提示登录 → 注册 → 登录 → 打卡） |
 
 ## 3. 后端测试范围（API 测试矩阵）
 
@@ -76,14 +76,14 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 ## 6. 最终验收运行
 
-最后一次代码修改（体验账号权限放宽、菜单“任一权限”判断）之后按顺序重新执行：
+最后一次代码修改（删除体验账号、访客只读浏览、自助注册、轻音主题登录注册页、品牌改为“放学后茶会”）之后按顺序重新执行：
 
 | 检查 | 结果 | 日志 |
 | --- | --- | --- |
-| 后端完整回归（体验账号权限调整后） | 194 passed | `tests/backend-last-run.log` |
+| 后端完整回归 | 225 passed | `tests/backend-last-run.log` |
 | 真实网络 / 并发子集（含新增三条链路） | 11 passed | 命令行输出 |
-| 前端类型检查 / Vitest / 构建 | 0 错误 / 14 passed / 成功 | `tests/frontend-final.log` |
-| Playwright E2E | 7 passed，0 失败，0 跳过 | `tests/e2e-results/last-run.log`、`report.json` |
+| 前端类型检查 / Vitest / 构建 | 0 错误 / 17 passed / 成功 | 命令行输出 |
+| Playwright E2E | 8 passed，0 失败，0 跳过 | `tests/e2e-results/last-run.log`、`report.json` |
 
 E2E 修复过程说明：前两轮失败均为测试选择器问题（Element Plus 将 `data-test` 透传到内部 input、日期控件丢弃该属性、正在关闭的旧下拉框被误匹配、新节点生成在画布可视区外），已改为包裹元素 + 通过 `aria-controls` 定位当前下拉框；不涉及业务缺陷，未使用重试掩盖失败。
 

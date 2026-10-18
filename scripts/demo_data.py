@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 
 import httpx
 
-MARKER = "【演示数据】欢迎来到放课后茶会株式会社"
+MARKER = "【演示数据】欢迎来到放学后茶会株式会社"
 
 
 class Client:
@@ -71,7 +71,7 @@ def main() -> int:
     ap.add_argument("--base", default="http://127.0.0.1:8000")
     args = ap.parse_args()
     pw = os.environ.get("DOE_SEED_PASSWORD") or getpass.getpass("种子账号密码：")
-    users = ["saito", "ritsu", "mio", "yui", "azusa", "ichigo", "mugi", "megumi", "fuuko", "nodoka", "himeko", "sawako",
+    users = ["ui", "ritsu", "mio", "yui", "azusa", "ichigo", "mugi", "megumi", "fuuko", "nodoka", "himeko", "sawako",
              "mika"]
     c = {u: Client(args.base, u, pw) for u in users}
     if any(a["title"] == MARKER for a in c["nodoka"].get("/api/announcements", params={"scope": "manage", "page_size": 200})["items"]):
@@ -119,7 +119,7 @@ def main() -> int:
     tr = c["ritsu"].post("/api/travel", params={"submit": "true"}, json={
         "destination": "琴吹家海边别墅", "start_date": str(next_workday(today, 6)), "end_date": str(next_workday(today, 8)),
         "purpose": "夏季合宿：新曲集训", "transport": "琴吹家专车", "estimated_cost": "3000.00"})
-    c["saito"].approve(tr["instance_id"], comment="已安排别墅")
+    c["ui"].approve(tr["instance_id"], comment="已安排别墅")
     cats = {x["code"]: x["id"] for x in c["yui"].get("/api/expense/categories")}
     f = c["yui"].call("POST", "/api/files", files={"file": ("receipt.pdf", io.BytesIO(b"%PDF-1.4 synthetic receipt"),
                                                             "application/pdf")}, data={"purpose": "expense_receipt"})
@@ -165,8 +165,8 @@ def main() -> int:
     print("[7/9] 招聘与转正")
     tea = next(d["id"] for d in c["nodoka"].get("/api/departments") if d["code"] == "TEA")
     req = c["nodoka"].post("/api/recruitment/requisitions", json={"title": "茶点专员", "department_id": tea, "headcount": 1})
-    cand = c["nodoka"].post("/api/recruitment/candidates", json={"requisition_id": req["id"], "name": "平泽忧", "gender": "女",
-                                                                 "email": "ui@htt.example", "source": "内推"})
+    cand = c["nodoka"].post("/api/recruitment/candidates", json={"requisition_id": req["id"], "name": "奥田直", "gender": "女",
+                                                                 "email": "nao@htt.example", "source": "内推"})
     mugi_id = c["mugi"].get("/api/auth/me")["id"]
     iv = c["nodoka"].post(f"/api/recruitment/candidates/{cand['id']}/interviews",
                           json={"interviewer_id": mugi_id, "scheduled_at": f"{today}T15:00:00"})

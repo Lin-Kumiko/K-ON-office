@@ -174,3 +174,23 @@ def count_active_members(db: Session, dept_id: int) -> int:
 def ensure_username_free(db: Session, username: str) -> None:
     if db.scalar(select(User.id).where(func.lower(User.username) == username.lower())):
         raise Conflict("用户名已存在", code="USERNAME_EXISTS")
+
+
+NEWCOMER_CODE = "NEWBIE"
+
+
+def ensure_newcomer_department(db: Session, operator_id: int | None = None) -> Department:
+    """Department that self-registered members join until an administrator moves them."""
+    d = db.scalar(select(Department).where(Department.code == NEWCOMER_CODE))
+    if d is not None:
+        if d.status != "active":
+            d.status = "active"
+            log_department(db, d.id, "enable", {"reason": "自助注册需要"}, operator_id)
+        return d
+    root = db.scalar(select(Department).where(Department.parent_id.is_(None)).order_by(Department.id))
+    d = Department(name="新成员（自助注册）", code=NEWCOMER_CODE, parent_id=root.id if root else None, sort=99,
+                   description="通过注册页面加入的成员；请由超级管理员调整到正式部门与岗位")
+    db.add(d)
+    db.flush()
+    log_department(db, d.id, "create", {"reason": "首次自助注册"}, operator_id)
+    return d

@@ -30,6 +30,9 @@ class Settings:
     # Simulated punches (custom punch_time) are allowed for everyone when True;
     # otherwise only users holding attendance:manage may simulate.
     simulation_mode: bool = True
+    # Self-service registration (username + password) and its per-IP hourly limit.
+    allow_registration: bool = True
+    register_limit_per_hour: int = 5
     cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
     frontend_dist: Path = PROJECT_DIR / "frontend" / "dist"
     # Frozen business clock, honoured only when env == "test" (reproducible tests).
@@ -54,6 +57,8 @@ def load_settings(**overrides) -> Settings:
         session_hours=int(os.environ.get("DOE_SESSION_HOURS", "12")),
         password_iterations=int(os.environ.get("DOE_PASSWORD_ITERATIONS", "210000")),
         simulation_mode=_bool("DOE_SIMULATION_MODE", True),
+        allow_registration=_bool("DOE_ALLOW_REGISTRATION", True),
+        register_limit_per_hour=int(os.environ.get("DOE_REGISTER_LIMIT_PER_HOUR", "5")),
         fixed_now=os.environ.get("DOE_FIXED_NOW") or None,
     )
     for key, value in overrides.items():

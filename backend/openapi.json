@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "DragonOffice Enterprise API",
-  "description": "放课后茶会株式会社 · OA / HRM / 工作流一体化平台（全部数据为合成数据）",
+  "description": "放学后茶会株式会社 · OA / HRM / 工作流一体化平台（全部数据为合成数据）",
   "version": "1.0.0"
  },
  "paths": {
@@ -30,6 +30,97 @@
        "application/json": {
         "schema": {
          "$ref": "#/components/schemas/LoginOut"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "请求错误",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "未认证",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "无权限",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "资源不存在",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "状态冲突 / 重复 / 并发冲突",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "参数校验失败",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/auth/register": {
+   "post": {
+    "tags": [
+     "认证"
+    ],
+    "summary": "自助注册（仅用户名 + 密码；注册后需登录）",
+    "operationId": "register_api_auth_register_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegisterOut"
         }
        }
       }
@@ -22033,6 +22124,87 @@
     }
    }
   },
+  "/api/public/overview": {
+   "get": {
+    "tags": [
+     "公开访问"
+    ],
+    "summary": "公开概览（访客可见，无需登录）",
+    "operationId": "overview_api_public_overview_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OverviewOut"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "请求错误",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "未认证",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "无权限",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "资源不存在",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "状态冲突 / 重复 / 并发冲突",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "参数校验失败",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/health": {
    "get": {
     "tags": [
@@ -24104,6 +24276,24 @@
      "name"
     ],
     "title": "DepartmentUpdate"
+   },
+   "DeptCount": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "headcount": {
+      "type": "integer",
+      "title": "Headcount"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "headcount"
+    ],
+    "title": "DeptCount"
    },
    "DeptLogOut": {
     "properties": {
@@ -27297,6 +27487,61 @@
     ],
     "title": "OvertimeOut"
    },
+   "OverviewOut": {
+    "properties": {
+     "company_name": {
+      "type": "string",
+      "title": "Company Name"
+     },
+     "slogan": {
+      "type": "string",
+      "title": "Slogan"
+     },
+     "stats": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Stats"
+     },
+     "announcements": {
+      "items": {
+       "$ref": "#/components/schemas/PublicAnnouncement"
+      },
+      "type": "array",
+      "title": "Announcements"
+     },
+     "meetings": {
+      "items": {
+       "$ref": "#/components/schemas/PublicMeeting"
+      },
+      "type": "array",
+      "title": "Meetings"
+     },
+     "departments": {
+      "items": {
+       "$ref": "#/components/schemas/DeptCount"
+      },
+      "type": "array",
+      "title": "Departments"
+     },
+     "registration_open": {
+      "type": "boolean",
+      "title": "Registration Open"
+     }
+    },
+    "type": "object",
+    "required": [
+     "company_name",
+     "slogan",
+     "stats",
+     "announcements",
+     "meetings",
+     "departments",
+     "registration_open"
+    ],
+    "title": "OverviewOut"
+   },
    "Page_AnnouncementOut_": {
     "properties": {
      "items": {
@@ -28370,6 +28615,84 @@
     ],
     "title": "ProbationOut"
    },
+   "PublicAnnouncement": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "pinned": {
+      "type": "boolean",
+      "title": "Pinned"
+     },
+     "published_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Published At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "category",
+     "pinned",
+     "published_at"
+    ],
+    "title": "PublicAnnouncement"
+   },
+   "PublicMeeting": {
+    "properties": {
+     "subject": {
+      "type": "string",
+      "title": "Subject"
+     },
+     "room": {
+      "type": "string",
+      "title": "Room"
+     },
+     "start_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start At"
+     },
+     "end_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "subject",
+     "room",
+     "start_at",
+     "end_at"
+    ],
+    "title": "PublicMeeting"
+   },
    "PunchIn": {
     "properties": {
      "punch_time": {
@@ -28817,6 +29140,53 @@
      "self_review"
     ],
     "title": "RegUpdate"
+   },
+   "RegisterIn": {
+    "properties": {
+     "username": {
+      "type": "string",
+      "maxLength": 20,
+      "minLength": 3,
+      "pattern": "^[A-Za-z0-9_.-]+$",
+      "title": "Username",
+      "description": "3-20 位字母、数字、下划线、点或短横线"
+     },
+     "password": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Password"
+     }
+    },
+    "type": "object",
+    "required": [
+     "username",
+     "password"
+    ],
+    "title": "RegisterIn"
+   },
+   "RegisterOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "username": {
+      "type": "string",
+      "title": "Username"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "username",
+     "message"
+    ],
+    "title": "RegisterOut"
    },
    "RejectIn": {
     "properties": {

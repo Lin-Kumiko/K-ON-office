@@ -16,6 +16,12 @@ from ..models import Department, Employee, User, UserSession
 
 SCOPE_RANK = {"self": 0, "department": 1, "all": 2}
 READ_METHODS = {"GET", "HEAD", "OPTIONS"}
+# What an anonymous visitor may read. Everything else (and every write) answers 401 LOGIN_REQUIRED.
+VISITOR_PERMISSIONS = frozenset({"announcement:read", "org:read", "document:read", "meeting:view"})
+
+
+def login_required() -> Unauthorized:
+    return Unauthorized("请先登录后再操作", code="LOGIN_REQUIRED")
 
 
 def get_db(request: Request) -> Iterator[Session]:
@@ -40,7 +46,7 @@ def get_write_db(request: Request) -> Iterator[Session]:
 
 @dataclass
 class CurrentUser:
-    user: User
+    user: User | None  # None for an anonymous visitor
     employee: Employee | None
     permissions: set[str]
     role_codes: set[str]
@@ -50,8 +56,12 @@ class CurrentUser:
     _dept_cache: set[int] | None = field(default=None, repr=False)
 
     @property
+    def visitor(self) -> bool:
+        return self.user is None
+
+    @property
     def id(self) -> int:
-        return self.user.id
+        return self.user.id if self.user is not None else -1
 
     @property
     def is_admin(self) -> bool:
@@ -62,9 +72,13 @@ class CurrentUser:
 
     def require(self, perm: str) -> None:
         if not self.has(perm):
+            if self.visitor:
+                raise login_required()
             raise Forbidden(f"缺少权限：{perm}", code="PERMISSION_DENIED")
 
     def require_employee(self) -> Employee:
+        if self.visitor:
+            raise login_required()
         if self.employee is None:
             raise Forbidden("当前账号未关联员工档案", code="NO_EMPLOYEE_PROFILE")
         return self.employee
@@ -85,7 +99,7 @@ def build_current_user(db: Session, user: User, session_id: int, ip: str | None 
 def current_user(request: Request, db: Session = Depends(get_db)) -> CurrentUser:
     header = request.headers.get("Authorization", "")
     if not header.lower().startswith("bearer "):
-        raise Unauthorized("未登录或登录已过期")
+        raise login_required()
     token = header[7:].strip()
     sess = db.scalar(select(UserSession).where(UserSession.token_hash == token_digest(token)))
     now = timeutil.now()
@@ -103,6 +117,25 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> CurrentUser
         raise Forbidden("首次登录或密码已重置，请先修改密码", code="PASSWORD_CHANGE_REQUIRED")
     request.state.current_user = cu
     return cu
+
+
+def viewer(request: Request, db: Session = Depends(get_db)) -> CurrentUser:
+    """Logged-in user when a token is sent, otherwise a read-only anonymous visitor."""
+    if request.headers.get("Authorization"):
+        return current_user(request, db)
+    return CurrentUser(user=None, employee=None, permissions=set(VISITOR_PERMISSIONS), role_codes=set(),
+                       data_scope="self", session_id=0, ip=request.client.host if request.client else None)
+
+
+def require_view(*perms: str):
+    """Like require(), but anonymous visitors pass when they hold one of the permissions."""
+    def _dep(cu: CurrentUser = Depends(viewer)) -> CurrentUser:
+        if not any(cu.has(p) for p in perms):
+            if cu.visitor:
+                raise login_required()
+            raise Forbidden(f"缺少权限：{' / '.join(perms)}", code="PERMISSION_DENIED")
+        return cu
+    return _dep
 
 
 def require(*perms: str):

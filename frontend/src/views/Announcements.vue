@@ -108,7 +108,7 @@ const readStat = ref<any>(null)
 async function view(row: any) {
   current.value = await api.get(`/api/announcements/${row.id}`)
   viewOpen.value = true
-  if (current.value.status === 'published' && !current.value.read) {
+  if (auth.loggedIn && current.value.status === 'published' && !current.value.read) {
     await api.post(`/api/announcements/${row.id}/read`)
     row.read = true
     appStore.refreshUnread()

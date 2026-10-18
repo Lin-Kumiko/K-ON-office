@@ -31,6 +31,10 @@
           </div>
           <el-tabs v-model="tab">
             <el-tab-pane label="部门人员" name="members">
+              <el-empty v-if="!auth.loggedIn" description="登录后可以查看部门人员" :image-size="70">
+                <el-button type="primary" @click="promptLogin()">登录查看</el-button>
+              </el-empty>
+              <template v-else>
               <el-checkbox v-model="withChildren" @change="loadMembers">包含下级部门</el-checkbox>
               <el-table :data="members" border size="small" class="mt" empty-text="暂无人员">
                 <el-table-column prop="employee_no" label="工号" width="100" />
@@ -41,6 +45,7 @@
                 <el-table-column label="状态" width="90"><template #default="{ row }"><StatusTag :status="row.status" /></template></el-table-column>
                 <el-table-column prop="phone" label="电话" />
               </el-table>
+              </template>
             </el-tab-pane>
             <el-tab-pane label="调整记录" name="logs">
               <el-timeline class="mt">
@@ -93,6 +98,7 @@ import { ElMessageBox } from 'element-plus'
 import { api } from '@/api/http'
 import { useAuth } from '@/stores/auth'
 import { act } from '@/utils/usePaged'
+import { promptLogin } from '@/utils/loginPrompt'
 import { invalidate } from '@/utils/options'
 import { fmtDateTime } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
@@ -124,6 +130,7 @@ async function loadTree() {
 }
 async function select(d: any) {
   current.value = d
+  if (!auth.loggedIn) return // member lists and change logs are only shown after login
   loadMembers()
   logs.value = await api.get(`/api/departments/${d.id}/logs`)
 }

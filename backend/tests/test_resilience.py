@@ -85,7 +85,7 @@ def test_upstream_downstream_inconsistency_is_detected(as_user, app, sql):
     # recovery: an administrator cancels the orphaned flow
     with app.state.db.engine.begin() as c:
         c.exec_driver_sql("UPDATE leave_requests SET status='pending' WHERE id=?", (lv["id"],))
-    ok(as_user("saito").post(f"/api/workflow/instances/{lv['instance_id']}/cancel", json={"comment": "数据修复"}))
+    ok(as_user("ui").post(f"/api/workflow/instances/{lv['instance_id']}/cancel", json={"comment": "数据修复"}))
     assert sql("SELECT status FROM leave_requests WHERE id=?", id=lv["id"])[0][0] == "cancelled"
     assert sql("SELECT pending_hours FROM leave_balances b JOIN leave_types t ON t.id=b.leave_type_id WHERE "
                "t.code='annual' AND b.employee_id=(SELECT id FROM employees WHERE employee_no='HTT0003')")[0][0] == 0
@@ -110,7 +110,7 @@ def test_db_busy_maps_to_retryable_503(app, as_user, monkeypatch):
 
 def test_invalid_definition_cannot_break_running_flows(as_user):
     """Publishing is refused for invalid graphs, so running instances keep their valid version."""
-    admin, yui = as_user("saito"), as_user("yui")
+    admin, yui = as_user("ui"), as_user("yui")
     lv = _leave(yui)
     d = next(x for x in ok(admin.get("/api/workflow/definitions")) if x["key"] == "leave")
     ok(admin.post(f"/api/workflow/definitions/{d['id']}/draft"))

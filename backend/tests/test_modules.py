@@ -19,7 +19,7 @@ def _emp_body(e):
 
 # ------------------------------------------------------------------ org
 def test_department_tree_and_changes(as_user):
-    admin = as_user("saito")
+    admin = as_user("ui")
     tree = ok(admin.get("/api/departments/tree"))
     assert len(tree) == 1 and tree[0]["code"] == "HTT"
     music = next(c for c in tree[0]["children"] if c["code"] == "MUSIC")
@@ -39,7 +39,7 @@ def test_department_tree_and_changes(as_user):
 
 
 def test_employee_create_update_optimistic_lock_and_resign(as_user, sql):
-    hr, admin = as_user("nodoka"), as_user("saito")
+    hr, admin = as_user("nodoka"), as_user("ui")
     costume = _dept(hr, "COSTUME")
     sawako_id = next(e for e in ok(hr.get("/api/employees/options")) if e["name"] == "山中佐和子")["id"]
     e = ok(hr.post("/api/employees", json={
@@ -90,7 +90,7 @@ def test_resigning_manager_moves_reports_and_tasks(as_user, sql):
 
 
 def test_positions(as_user):
-    admin = as_user("saito")
+    admin = as_user("ui")
     p = ok(admin.post("/api/positions", json={"name": "鼓手", "code": "DRUM", "level": 4}), 201)
     err(admin.post("/api/positions", json={"name": "鼓手2", "code": "DRUM"}), 409)
     ok(admin.put(f"/api/positions/{p['id']}", json={"name": "鼓手（兼社长）", "code": "DRUM", "level": 5}))
@@ -292,7 +292,7 @@ def test_dashboard_and_reports(as_user):
 
 
 def test_settings_and_holidays(as_user):
-    admin, hr = as_user("saito"), as_user("nodoka")
+    admin, hr = as_user("ui"), as_user("nodoka")
     ok(admin.put("/api/settings", json={"values": {"company.slogan": "先喝茶，再加油"}}))
     assert any(s["value"] == "先喝茶，再加油" for s in ok(hr.get("/api/settings")))
     err(admin.put("/api/settings", json={"values": {"evil": 1}}), 422)

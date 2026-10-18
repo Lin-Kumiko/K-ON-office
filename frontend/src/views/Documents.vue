@@ -2,7 +2,8 @@
   <div class="page">
     <div class="page-head">
       <div><h2>文档中心</h2><div class="sub">支持分类、搜索、版本与访问范围（公开 / 部门 / 私有），下载会记录历史</div></div>
-      <el-button v-if="auth.can('document:upload')" type="primary" @click="openUpload()">上传文档</el-button>
+      <el-button v-if="auth.can('document:upload') || !auth.loggedIn" type="primary"
+                 @click="auth.loggedIn ? openUpload() : promptLogin()">上传文档</el-button>
     </div>
     <div class="card">
       <div class="toolbar">
@@ -91,6 +92,7 @@ import { ElMessageBox } from 'element-plus'
 import { api, downloadFile } from '@/api/http'
 import { useAuth } from '@/stores/auth'
 import { act, usePaged } from '@/utils/usePaged'
+import { promptLogin } from '@/utils/loginPrompt'
 import { fmtDateTime } from '@/utils/format'
 
 const VIS: Record<string, string> = { public: '公开', department: '部门可见', private: '私有' }

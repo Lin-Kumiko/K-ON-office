@@ -1,6 +1,8 @@
 import { reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { api, errorText, type Params } from '@/api/http'
+import { ApiError, api, errorText, type Params } from '@/api/http'
+
+const needsLogin = (e: unknown) => e instanceof ApiError && e.code === 'LOGIN_REQUIRED'
 
 export interface PageResult<T> {
   items: T[]
@@ -32,7 +34,7 @@ export function usePaged<T = any>(url: string | (() => string), params: () => Pa
     } catch (e) {
       state.error = errorText(e)
       state.items = []
-      ElMessage.error(state.error)
+      if (!needsLogin(e)) ElMessage.error(state.error)
     } finally {
       state.loading = false
     }
@@ -48,7 +50,7 @@ export async function act(fn: () => Promise<unknown>, success?: string): Promise
     if (success) ElMessage.success(success)
     return true
   } catch (e) {
-    ElMessage.error(errorText(e))
+    if (!needsLogin(e)) ElMessage.error(errorText(e))
     return false
   }
 }

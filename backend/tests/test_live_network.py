@@ -247,8 +247,8 @@ def test_onboarding_regularization_meeting_chains_over_network(live):
     hr, mugi, yui, azusa = (login(live.base, u) for u in ("nodoka", "mugi", "yui", "azusa"))
     tea = next(d for d in j(hr.get("/api/departments")) if d["code"] == "TEA")
     onb = j(hr.post("/api/onboarding?submit=true", json={
-        "name": "平泽忧", "email": "ui.net@htt.example", "department_id": tea["id"], "hire_date": "2026-11-02",
-        "probation_months": 3, "create_account": True, "username": "ui"}), 201)
+        "name": "奥田直", "email": "nao.net@htt.example", "department_id": tea["id"], "hire_date": "2026-11-02",
+        "probation_months": 3, "create_account": True, "username": "nao"}), 201)
     j(mugi.post(f"/api/workflow/tasks/{task_for(mugi, onb['instance_id'])['id']}/approve", json={}))
     j(hr.post(f"/api/workflow/tasks/{task_for(hr, onb['instance_id'])['id']}/approve", json={}))
     final = j(hr.get(f"/api/onboarding/{onb['id']}"))

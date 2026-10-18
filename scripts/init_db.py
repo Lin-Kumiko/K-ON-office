@@ -49,16 +49,6 @@ def main() -> int:
         users = seed_base(s, password, settings.password_iterations)
         s.commit()
     print(f"[ok] 已写入基础合成数据：{len(users)} 个账号（{', '.join(users)}）")
-    test_pw = os.environ.get("DOE_TEST_PASSWORD")
-    if test_pw:
-        from create_test_account import create
-        try:
-            create(db, test_pw, settings.password_iterations, "test")
-            print("[ok] 已创建体验账号 test（体验访客角色，无管理权限）")
-        except ValidationFailed as e:
-            print(f"[warn] 体验账号未创建：{e.message}")
-    else:
-        print("[info] 未设置 DOE_TEST_PASSWORD，跳过体验账号；之后可运行 scripts\\create_test_account.py")
     db.dispose()
     return 0
 

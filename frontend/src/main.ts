@@ -9,6 +9,7 @@ import './styles/theme.css'
 import App from './App.vue'
 import { router } from './router'
 import { onAuthProblem } from './api/http'
+import { promptLogin } from './utils/loginPrompt'
 import { useAuth } from './stores/auth'
 import { useApp } from './stores/app'
 
@@ -20,9 +21,11 @@ app.use(ElementPlus, { locale: zhCn })
 for (const [name, comp] of Object.entries(Icons)) app.component(name, comp)
 
 onAuthProblem({
-  unauthorized: () => {
+  unauthorized: (err) => {
     const auth = useAuth()
-    if (auth.token) {
+    if (err.code === 'LOGIN_REQUIRED' && !auth.token) {
+      promptLogin()
+    } else if (auth.token) {
       auth.logout(false)
       ElMessage.warning('登录已失效，请重新登录')
       router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })

@@ -10,7 +10,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..core.common import audit, paginate
-from ..core.deps import CurrentUser, PageParams, department_subtree, get_db, get_write_db, require
+from ..core.deps import require_view, CurrentUser, PageParams, department_subtree, get_db, get_write_db, require
 from ..core.errors import Conflict, Forbidden, NotFound, ValidationFailed
 from ..models import Department, DocCategory, Document, DocumentLog, DocumentVersion, User
 from .common import ERRORS, Msg, Page
@@ -31,7 +31,7 @@ class DocCategoryIn(BaseModel):
 
 
 @router.get("/categories", response_model=list[DocCategoryOut], summary="文档分类")
-def categories(cu: CurrentUser = Depends(require("document:read")), db: Session = Depends(get_db)):
+def categories(cu: CurrentUser = Depends(require_view("document:read")), db: Session = Depends(get_db)):
     return [DocCategoryOut.model_validate(c, from_attributes=True) for c in db.scalars(select(DocCategory).order_by(DocCategory.id))]
 
 
@@ -133,7 +133,7 @@ def _check_meta(db: Session, cu: CurrentUser, category_id: int | None, visibilit
 @router.get("", response_model=Page[DocumentOut], summary="文档搜索（标题/关键字/描述，按权限过滤）")
 def list_documents(q: str | None = Query(None, max_length=64), category_id: int | None = None,
                    mine: bool = False, include_deleted: bool = False, page: PageParams = Depends(),
-                   cu: CurrentUser = Depends(require("document:read")), db: Session = Depends(get_db)):
+                   cu: CurrentUser = Depends(require_view("document:read")), db: Session = Depends(get_db)):
     stmt = select(Document)
     if not (include_deleted and cu.has("document:manage")):
         stmt = stmt.where(Document.status == "active")
@@ -184,7 +184,7 @@ def _get(db: Session, cu: CurrentUser, doc_id: int) -> Document:
 
 
 @router.get("/{doc_id}", response_model=DocumentOut, summary="文档详情（含版本）")
-def get_document(doc_id: int, cu: CurrentUser = Depends(require("document:read")), db: Session = Depends(get_db)):
+def get_document(doc_id: int, cu: CurrentUser = Depends(require_view("document:read")), db: Session = Depends(get_db)):
     return doc_out(db, cu, _get(db, cu, doc_id), True)
 
 

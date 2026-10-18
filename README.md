@@ -1,29 +1,28 @@
-# DragonOffice Enterprise · 放课后茶会株式会社
+# DragonOffice Enterprise · 放学后茶会株式会社
 
-企业级 OA、HRM 与通用工作流一体化管理平台（轻音少女主题版本）。虚拟企业「放课后茶会株式会社」的全部人员与业务数据均为**合成数据**。
+企业级 OA、HRM 与通用工作流一体化管理平台（轻音少女主题版本）。虚拟企业「放学后茶会株式会社」的全部人员与业务数据均为**合成数据**。
 
 - 后端：Python 3.14 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic 2 · SQLite（WAL）
 - 前端：Vue 3 · TypeScript · Vite 7 · Pinia · Vue Router · Element Plus · ECharts
 - 测试：Pytest + HTTPX（应用内传输 + 真实网络）· Vitest · Playwright（使用本机已安装的 Google Chrome）
 
-> 仓库：https://github.com/Lin-Kumiko/dragonoffice-enterprise-kon · 进度记录见 [PROGRESS.md](PROGRESS.md)。
+> 仓库：https://github.com/Lin-Kumiko/K-ON-office · 进度记录见 [PROGRESS.md](PROGRESS.md)。
 > 仓库只包含源码、迁移、测试与文档；不包含数据库、上传文件、依赖目录和任何密码，克隆后按下文初始化即可。
 
 ## 0. 快速体验（克隆后）
 
 ```powershell
-git clone https://github.com/Lin-Kumiko/dragonoffice-enterprise-kon.git
-cd dragonoffice-enterprise-kon
+git clone https://github.com/Lin-Kumiko/K-ON-office.git
+cd K-ON-office
 python -m venv backend\.venv
 backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 cd frontend; npm ci; cd ..
-$env:DOE_SEED_PASSWORD = "YOUR_ADMIN_PASSWORD"   # 13 个内置账号（含管理员）的密码
-$env:DOE_TEST_PASSWORD = "YOUR_TRIAL_PASSWORD"   # 体验账号 test 的密码（需与上面不同）
+$env:DOE_SEED_PASSWORD = "YOUR_ADMIN_PASSWORD"   # 13 个内置账号（含超级管理员 ui）的密码
 backend\.venv\Scripts\python.exe scripts\init_db.py
 backend\.venv\Scripts\python.exe scripts\start.py
 ```
 
-打开 http://localhost:5173 ，用 `test` 登录即可体验；需要审批、管理功能时改用第 5 节的内置账号。
+打开 http://localhost:5173 ：不登录也能浏览公开内容；点“注册”用用户名和密码创建账号，再登录即可使用。管理功能用超级管理员 `ui` 登录。
 
 ## 1. 环境要求
 
@@ -102,7 +101,7 @@ cd frontend; npm run dev
 
 | 用户名 | 姓名 | 部门 / 角色 | 典型用途 |
 | --- | --- | --- | --- |
-| `saito` | 斋藤（琴吹家执事） | 信息系统部 · 系统管理员 | 用户、角色、流程设计、审计 |
+| `ui` | 平泽忧 | 信息系统部 · 超级管理员 | 全部权限：用户、角色、系统设置、流程设计、审计 |
 | `ritsu` | 田井中律 | 社长 · 总经理/主管 | 大额报销审批、全局报表 |
 | `mio` | 秋山澪 | 音乐制作部经理 · 主管 | 直属主管审批 |
 | `yui` | 平泽唯 | 现场演出组组长 · 主管 | 员工请假、报销、出差 |
@@ -115,24 +114,21 @@ cd frontend; npm run dev
 
 密码为初始化时设置的 `YOUR_PASSWORD_HERE`（文档不记录真实值）。管理员重置密码或入职新建的账号首次登录必须修改密码。
 
-### 体验账号（可交给他人使用）
+### 访客浏览与自助注册
 
-| 用户名 | 角色 | 能做什么 | 不能做什么 |
-| --- | --- | --- | --- |
-| `test` | 体验访客（guest，数据范围：全部） | 几乎全部功能：组织与员工档案维护（含敏感字段）、招聘入职、转正调岗、考勤与假期管理、报销财务确认、会议室/公告/文档管理、绩效、模拟薪资、流程设计与发布、流程监控（可把任意待办改派给自己再审批）、统计报表、审计与登录日志；并以“体验用户”身份打卡、请假、报销 | 用户管理（创建/停用/重置密码/分配角色）、角色权限修改、系统设置 |
+| 身份 | 可以做什么 |
+| --- | --- |
+| 访客（未登录） | 浏览首页概览、公告（全员可见的）、组织架构树与岗位、公开文档、会议室与会议日历。点击其他菜单或任何操作（打卡、请假、预约、上传、下载等）都会弹出“请先登录”，可选择去登录或去注册 |
+| 注册用户 | 注册只需**用户名 + 密码**（3-20 位字母/数字/下划线；密码至少 8 位且含字母和数字），注册后需登录。自动成为“普通员工”，放在“新成员（自助注册）”部门，可打卡、请假、出差、报销、预约会议室等；没有上级时其审批由超级管理员处理 |
+| 超级管理员 `ui`（平泽忧） | 全部权限：用户、角色权限、系统设置、流程设计等；可把注册用户调到正式部门或授予更多角色 |
 
-- 创建：初始化时设置 `DOE_TEST_PASSWORD`，或对已有数据库运行 `backend\.venv\Scripts\python.exe scripts\create_test_account.py`。
-- 体验账号密码**必须**与内置账号不同（脚本会拒绝重复）。体验角色拿不到账号与权限管理，因此把密码交给别人也无法登录他人账号、给自己提权或锁定管理员；不需要首次改密，可多人共用。
-- 体验角色不参与任何审批人策略（不属于 hr/finance 等角色），不会改变现有流程由谁审批；想体验审批时，在“审批中心 → 流程监控”中把待办改派给自己。
-- 体验账号能修改业务数据（发布流程、计算/确认工资、办理离职等）；共享实例上请把它当作演示环境。
-- 已有数据库升级体验角色权限：再次运行 `scripts\create_test_account.py` 即可同步（不需要密码）。
-- 需要更换时：`scripts\reset_password.py test`。
-- 后端默认只监听 `127.0.0.1`；若要让局域网内其他人访问你的实例，需要自行改用 `--host 0.0.0.0` 并评估网络安全。
+- 注册防滥用：同一 IP 每小时最多注册 5 个账号（`DOE_REGISTER_LIMIT_PER_HOUR`），保留用户名（如 admin、root）不可注册；`DOE_ALLOW_REGISTRATION=false` 可关闭注册。
+- 让局域网内其他人访问：`backend\.venv\Scripts\python.exe scripts\start.py --prod --host 0.0.0.0`，脚本会打印本机访问地址；如无法访问需自行在 Windows 防火墙中放行该端口。对公网开放前请先修改超级管理员与各内置账号的密码。
 
 忘记开发库密码时，可在本机重置（隐藏输入，不打印）：
 
 ```powershell
-backend\.venv\Scripts\python.exe scripts\reset_password.py --all     # 或指定用户名，如 saito
+backend\.venv\Scripts\python.exe scripts\reset_password.py --all     # 或指定用户名，如 ui
 ```
 
 ## 6. 测试

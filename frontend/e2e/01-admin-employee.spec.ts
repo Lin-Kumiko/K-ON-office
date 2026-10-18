@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { api, expectSuccess, login, pickOption, field } from './helpers'
 
 test('管理员登录并创建员工档案（含账号）', async ({ page }) => {
-  await login(page, 'saito')
+  await login(page, 'ui')
   await page.locator('[data-test=menu-employees]').click()
   await expect(page.locator('[data-test=employee-table]')).toContainText('平泽唯')
   await page.locator('[data-test=new-employee]').click()

@@ -244,7 +244,7 @@ def test_crash_and_restart_recovery(live):
 
 
 def test_onboarding_regularization_meeting_chains_over_network(live):
-    hr, mugi, yui, azusa = (login(live.base, u) for u in ("nodoka", "mugi", "yui", "azusa"))
+    hr, mugi, yui = (login(live.base, u) for u in ("nodoka", "mugi", "yui"))
     tea = next(d for d in j(hr.get("/api/departments")) if d["code"] == "TEA")
     onb = j(hr.post("/api/onboarding?submit=true", json={
         "name": "奥田直", "email": "nao.net@htt.example", "department_id": tea["id"], "hire_date": "2026-11-02",
@@ -255,11 +255,18 @@ def test_onboarding_regularization_meeting_chains_over_network(live):
     assert final["status"] == "approved" and final["employee_id"] and final["user_id"]
     assert len(j(hr.get(f"/api/onboarding-tasks?scope=all&onboarding_id={onb['id']}"))) == 4
 
-    reg = j(azusa.post("/api/regularization?submit=true", json={"planned_date": "2026-11-01", "self_review": "网络链路"}), 201)
+    live_dept = next(d for d in j(hr.get("/api/departments")) if d["code"] == "LIVE")
+    newbie = j(hr.post("/api/employees", json={
+        "name": "铃木纯", "email": "jun.net@htt.example", "department_id": live_dept["id"],
+        "manager_id": j(yui.get("/api/auth/me"))["employee"]["id"], "hire_date": "2026-08-03", "probation_months": 3,
+        "create_account": True, "username": "jun", "password": "JunBass2026"}), 201)
+    jun = login(live.base, "jun", "JunBass2026")
+    j(jun.post("/api/auth/change-password", json={"old_password": "JunBass2026", "new_password": "JunBass2026x"}))
+    reg = j(jun.post("/api/regularization?submit=true", json={"planned_date": "2026-11-01", "self_review": "网络链路"}), 201)
     j(yui.post(f"/api/workflow/tasks/{task_for(yui, reg['instance_id'])['id']}/approve",
                json={"form_data": {"score": 88, "evaluation": "稳定可靠"}}))
     j(hr.post(f"/api/workflow/tasks/{task_for(hr, reg['instance_id'])['id']}/approve", json={}))
-    emp = j(hr.get(f"/api/employees/{j(azusa.get('/api/auth/me'))['employee']['id']}"))
+    emp = j(hr.get(f"/api/employees/{newbie['id']}"))
     assert emp["status"] == "regular"
 
     hall = next(r for r in j(yui.get("/api/meeting/rooms")) if r["name"] == "讲堂")

@@ -161,7 +161,7 @@ def main() -> int:
                                                                 "text/markdown")},
                      data={"title": "员工手册", "visibility": "public", "keywords": "制度"})
 
-    print("[7/9] 招聘与转正")
+    print("[7/9] 招聘")
     tea = next(d["id"] for d in c["nodoka"].get("/api/departments") if d["code"] == "TEA")
     req = c["nodoka"].post("/api/recruitment/requisitions", json={"title": "茶点专员", "department_id": tea, "headcount": 1})
     cand = c["nodoka"].post("/api/recruitment/candidates", json={"requisition_id": req["id"], "name": "奥田直", "gender": "女",
@@ -172,8 +172,6 @@ def main() -> int:
     c["mugi"].post(f"/api/recruitment/interviews/{iv['id']}/result", json={"score": 96, "feedback": "厨艺满分", "result": "pass"})
     c["nodoka"].post("/api/recruitment/offers", json={"candidate_id": cand["id"], "department_id": tea, "salary": "9000.00",
                                                       "hire_date": str(next_workday(today, 10))})
-    c["azusa"].post("/api/regularization", params={"submit": "true"},
-                    json={"planned_date": "2026-11-01", "self_review": "三个月来认真练习，也学会了在社团里喝茶。"})
 
     print("[8/9] 绩效周期")
     cyc = c["nodoka"].post("/api/performance/cycles", json={

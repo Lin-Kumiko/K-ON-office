@@ -44,7 +44,7 @@ PEOPLE = [
     ("ritsu", "田井中律", "女", "HTT", "CEO", None, ["employee", "manager", "ceo"], date(2024, 4, 1), "regular"),
     ("mio", "秋山澪", "女", "MUSIC", "MGR", "ritsu", ["employee", "manager"], date(2024, 4, 1), "regular"),
     ("yui", "平泽唯", "女", "LIVE", "LEAD", "mio", ["employee", "manager"], date(2024, 4, 1), "regular"),
-    ("azusa", "中野梓", "女", "LIVE", "GUITAR", "yui", ["employee"], date(2026, 8, 1), "probation"),
+    ("azusa", "中野梓", "女", "LIVE", "GUITAR", "yui", ["employee"], date(2026, 8, 1), "regular"),
     ("ichigo", "若王子苺", "女", "LIVE", "STAGE", "yui", ["employee"], date(2025, 4, 1), "regular"),
     ("mugi", "琴吹紬", "女", "TEA", "MGR", "ritsu", ["employee", "manager", "admin_staff"], date(2024, 4, 1), "regular"),
     ("megumi", "曾我部惠", "女", "FIN", "MGR", "ritsu", ["employee", "manager", "finance"], date(2024, 9, 1), "regular"),

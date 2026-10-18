@@ -105,31 +105,49 @@ def test_onboarding_links_existing_account_without_duplicate(as_user, sql):
     assert ok(hr.get(f"/api/employees/{final['employee_id']}"))["status"] == "regular"
 
 
+def test_seed_has_no_probation_employees(as_user):
+    hr = as_user("nodoka")
+    assert ok(hr.get("/api/regularization/probation-employees")) == []
+    azusa = next(e for e in ok(hr.get("/api/employees?q=中野梓"))["items"])
+    assert azusa["status"] == "regular"
+    err(as_user("azusa").post("/api/regularization", json={"planned_date": "2026-11-01", "self_review": "x"}),
+        409, "NOT_ON_PROBATION")
+
+
 def test_regularization_chain(as_user, sql):
     hr = as_user("nodoka")
+    live, yui = _dept(hr, "LIVE"), as_user("yui")
+    yui_id = ok(yui.get("/api/auth/me"))["employee"]["id"]
+    ok(hr.post("/api/employees", json={
+        "name": "铃木纯", "gender": "女", "email": "jun@htt.example", "department_id": live["id"], "manager_id": yui_id,
+        "hire_date": "2026-08-03", "probation_months": 3, "create_account": True, "username": "jun",
+        "password": "JunBass2026"}), 201)
+    from tests.conftest import login
+    jun = login(hr.client, "jun", "JunBass2026")
+    ok(jun.post("/api/auth/change-password", json={"old_password": "JunBass2026", "new_password": "JunBass2026x"}))
     probation = ok(hr.get("/api/regularization/probation-employees"))
-    azusa = next(p for p in probation if p["name"] == "中野梓")
-    reg = ok(as_user("azusa").post("/api/regularization?submit=true", json={
+    newbie = next(p for p in probation if p["name"] == "铃木纯")
+    assert newbie["probation_end_date"] == "2026-11-03"
+    reg = ok(jun.post("/api/regularization?submit=true", json={
         "planned_date": "2026-11-01", "self_review": "三个月里认真练习，也学会了在社团里喝茶"}), 201)
     assert reg["status"] == "pending"
-    yui = as_user("yui")  # azusa's direct manager evaluates
-    t = _task_for(yui, reg["instance_id"])
+    t = _task_for(yui, reg["instance_id"])  # the direct manager evaluates
     err(yui.post(f"/api/workflow/tasks/{t['id']}/approve", json={"comment": "ok"}), 422, "EVALUATION_REQUIRED")
     assert ok(yui.get(f"/api/workflow/instances/{reg['instance_id']}"))["status"] == "running"  # rolled back
     ok(yui.post(f"/api/workflow/tasks/{t['id']}/approve", json={
-        "comment": "小梓很可靠", "form_data": {"score": 92, "evaluation": "技术扎实，带动大家认真练习"}}))
+        "comment": "小纯很可靠", "form_data": {"score": 92, "evaluation": "技术扎实，带动大家认真练习"}}))
     t2 = _task_for(hr, reg["instance_id"])
     ok(hr.post(f"/api/workflow/tasks/{t2['id']}/approve", json={"comment": "同意转正",
                                                                 "form_data": {"comment": "材料齐全"}}))
     final = ok(hr.get(f"/api/regularization/{reg['id']}"))
     assert final["status"] == "approved" and final["manager_score"] == 92 and final["hr_comment"] == "材料齐全"
-    emp = ok(hr.get(f"/api/employees/{azusa['id']}"))
+    emp = ok(hr.get(f"/api/employees/{newbie['id']}"))
     assert emp["status"] == "regular" and emp["regularized_date"] == "2026-11-01"
-    hist = ok(hr.get(f"/api/employees/{azusa['id']}/history"))
+    hist = ok(hr.get(f"/api/employees/{newbie['id']}/history"))
     assert hist[-1]["change_type"] == "regularize" and hist[-1]["from_status"] == "probation"
     assert hist[-1]["to_status"] == "regular"
     # a regular employee cannot apply again
-    err(as_user("azusa").post("/api/regularization", json={"planned_date": "2026-12-01", "self_review": "x"}),
+    err(jun.post("/api/regularization", json={"planned_date": "2026-12-01", "self_review": "x"}),
         409, "NOT_ON_PROBATION")
 
 

@@ -14,7 +14,7 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 | # | 命令（目录） | 结果 |
 | --- | --- | --- |
-| 1 | `.venv\Scripts\python.exe -m pytest`（backend，访客浏览 / 注册改动后的最新完整回归） | **225 passed, 1 deselected（slow）**，121.2s；此前带覆盖率运行的语句覆盖率为 **91%** |
+| 1 | `.venv\Scripts\python.exe -m pytest`（backend，中野梓改为正式员工后的最新完整回归） | **226 passed, 1 deselected（slow）**，121.2s；此前带覆盖率运行的语句覆盖率为 **91%** |
 | 2 | `.venv\Scripts\python.exe -m pytest tests/test_live_network.py -m live`（backend，新增链路后单独复跑） | **11 passed** |
 | 2b | `.venv\Scripts\python.exe -m pytest tests/test_visitor_register.py tests/test_smoke.py tests/test_contract.py` | **100 passed**（访客只读 10 个公开接口；14 类操作返回 401 LOGIN_REQUIRED；访客只看到全员公告与公开文档；注册→登录→打卡/请假；注册校验 7 种；IP 限频与关闭开关；伪造令牌不降级为访客；全部 217 个操作的未登录行为） |
 | 3 | `.venv\Scripts\python.exe -m pytest tests/test_performance.py -m slow -s`（backend） | **1 passed**，结果见第 5 节与 `tests/performance.json` |
@@ -80,7 +80,7 @@ Windows 11 Pro 22631 · Python 3.14.3（`backend/.venv`）· Node 24.19.0 / npm 
 
 | 检查 | 结果 | 日志 |
 | --- | --- | --- |
-| 后端完整回归 | 225 passed | `tests/backend-last-run.log` |
+| 后端完整回归 | 226 passed | `tests/backend-last-run.log` |
 | 真实网络 / 并发子集（含新增三条链路） | 11 passed | 命令行输出 |
 | 前端类型检查 / Vitest / 构建 | 0 错误 / 17 passed / 成功 | 命令行输出 |
 | Playwright E2E | 8 passed，0 失败，0 跳过 | `tests/e2e-results/last-run.log`、`report.json` |

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Receives a release bundle (tar.gz on stdin) from CI and rolls it out, with automatic rollback.
-# Installed as /usr/local/sbin/k-on-deploy and bound to the CI key through a forced command in
-# root's authorized_keys, so that key can do nothing except run this script.
+# Rolls out a release bundle (tar.gz on stdin) with automatic rollback.
+# Installed as /usr/local/sbin/k-on-deploy; fed by /usr/local/sbin/k-on-pull, which downloads the bundle
+# that CI publishes to the GitHub release "server-build".
 #
 # Bundle layout: backend/ (without tests), scripts/, frontend/dist/, deploy/
 set -euo pipefail

@@ -54,12 +54,16 @@ jobs:
           path: frontend/dist
           retention-days: 3
 
-  deploy:
+  publish:
+    # Publishes the bundle; the server pulls it (k-on-pull.timer), so nothing logs in to the server.
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: [backend, frontend]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: production
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
@@ -68,29 +72,25 @@ jobs:
           path: frontend/dist
       - name: Build release bundle
         run: |
+          echo "$GITHUB_SHA" > frontend/dist/release.txt
           tar -czf "$RUNNER_TEMP/release.tgz" --exclude='backend/tests' --exclude='__pycache__' \
             backend scripts deploy frontend/dist
+          echo "$GITHUB_SHA $(sha256sum "$RUNNER_TEMP/release.tgz" | cut -d' ' -f1)" > "$RUNNER_TEMP/version.txt"
           ls -lh "$RUNNER_TEMP/release.tgz"
-      - name: Ship to server
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      - name: Publish to the server-build release
         run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          # The key is bound to a forced command on the server; it can only run the deploy receiver.
-          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
-            "root@$DEPLOY_HOST" < "$RUNNER_TEMP/release.tgz"
-      - name: Smoke test
+          gh release view server-build >/dev/null 2>&1 || gh release create server-build --prerelease \
+            --title "Server build" --notes "Rolling bundle pulled by the server. Not a versioned release."
+          # bundle first, metadata last, so the server never sees a version whose bundle is not there yet
+          gh release upload server-build "$RUNNER_TEMP/release.tgz" --clobber
+          gh release upload server-build "$RUNNER_TEMP/version.txt" --clobber
+      - name: Wait for the server to pick it up
         if: vars.DEPLOY_URL != ''
         run: |
-          for i in $(seq 1 10); do
-            curl -fsS "${{ vars.DEPLOY_URL }}/api/health" && exit 0
-            sleep 3
+          for i in $(seq 1 40); do
+            live=$(curl -fsS "${{ vars.DEPLOY_URL }}/release.txt" 2>/dev/null || true)
+            if [ "$live" = "$GITHUB_SHA" ]; then echo "live after ~$((i * 15))s"; exit 0; fi
+            sleep 15
           done
+          echo "server did not report $GITHUB_SHA within 10 minutes (check: journalctl -u k-on-pull)"
           exit 1
-      - name: Remove key
-        if: always()
-        run: rm -f ~/.ssh/deploy_key

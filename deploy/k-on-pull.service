@@ -1,0 +1,9 @@
+[Unit]
+Description=Pull and deploy the latest K-ON Office release from GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/k-on-pull
+TimeoutStartSec=15min

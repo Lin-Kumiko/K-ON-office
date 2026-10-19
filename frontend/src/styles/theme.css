@@ -17,6 +17,17 @@
   --doe-radius-panel: 16px;
   --doe-radius-control: 10px;
   --doe-header-bg: rgba(246, 246, 248, 0.78);
+  /* liquid glass */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg-strong: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(20, 20, 40, 0.07);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 10px 34px -14px rgba(48, 26, 60, 0.16), 0 2px 6px -2px rgba(48, 26, 60, 0.05);
+  --glass-blur: blur(22px) saturate(1.9);
+  --ambient-1: rgba(214, 120, 174, 0.28);
+  --ambient-2: rgba(110, 150, 230, 0.24);
+  --ambient-3: rgba(250, 180, 130, 0.18);
 
   --el-color-primary: #9e3a72;
   --el-color-primary-light-3: #bb759c;
@@ -63,6 +74,15 @@ html.dark {
   --doe-brand: #e07ab0;
   --doe-brand-soft: #2b1f2b;
   --doe-header-bg: rgba(15, 16, 19, 0.75);
+  --glass-bg: rgba(28, 29, 35, 0.58);
+  --glass-bg-strong: rgba(30, 31, 37, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-edge: rgba(0, 0, 0, 0.4);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 12px 36px -14px rgba(0, 0, 0, 0.6);
+  --ambient-1: rgba(190, 80, 150, 0.2);
+  --ambient-2: rgba(70, 100, 200, 0.18);
+  --ambient-3: rgba(200, 120, 80, 0.1);
 
   --el-color-primary: #e07ab0;
   --el-color-primary-light-3: #a45d84;
@@ -381,19 +401,149 @@ body,
   outline: none;
 }
 
-/* route change: one quiet fade */
-.view-fade-enter-active {
-  transition: opacity 0.16s ease;
+/* ---------- liquid glass ---------- */
+
+/* ambient light behind the glass: soft, low-saturation, fixed while scrolling */
+body {
+  background:
+    radial-gradient(42vw 42vw at 6% -8%, var(--ambient-1), transparent 70%),
+    radial-gradient(38vw 38vw at 104% 18%, var(--ambient-2), transparent 70%),
+    radial-gradient(46vw 40vw at 60% 112%, var(--ambient-3), transparent 70%),
+    var(--doe-bg);
+  background-attachment: fixed;
 }
 
-.view-fade-enter-from {
+#app {
+  background: transparent;
+}
+
+.glass,
+.card,
+.el-card {
+  position: relative;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px var(--glass-edge), var(--glass-shadow);
+}
+
+/* specular rim: brighter along the top edge, fading towards the bottom */
+.glass::before,
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-highlight), transparent 38%, transparent 70%, var(--glass-border));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* tables sit on the glass; fixed columns stay opaque so scrolled cells never show through */
+.el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  background: transparent;
+}
+
+.el-table .el-table-fixed-column--right,
+.el-table .el-table-fixed-column--left {
+  background: var(--glass-bg-strong) !important;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.el-table__body tr:hover > td.el-table__cell {
+  background-color: var(--doe-hover);
+}
+
+.el-dialog,
+.el-message-box,
+.el-drawer,
+.el-popper.is-light,
+.el-dropdown__popper.el-popper,
+.el-select__popper.el-popper,
+.el-picker__popper.el-popper {
+  background: var(--glass-bg-strong) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px var(--glass-edge), 0 24px 60px -20px rgba(30, 20, 40, 0.35) !important;
+}
+
+.el-overlay {
+  background-color: rgba(20, 16, 28, 0.28);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+html.dark .el-input__wrapper,
+html.dark .el-select__wrapper,
+html.dark .el-textarea__inner {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.is-text):not(.is-link) {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+html.dark .el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.is-text):not(.is-link) {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- page transitions ---------- */
+
+.view-enter-active {
+  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.28s ease;
+}
+
+.view-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+}
+
+.view-enter-from {
   opacity: 0;
+  transform: translateY(10px) scale(0.995);
+  filter: blur(6px);
+}
+
+.view-leave-to {
+  opacity: 0;
+  transform: scale(0.99);
+  filter: blur(4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .view-fade-enter-active,
+  .view-enter-active,
+  .view-leave-active,
   .row {
     transition: none;
+  }
+  .view-enter-from,
+  .view-leave-to {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* browsers without backdrop-filter fall back to near-opaque surfaces */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .card,
+  .el-card {
+    background: var(--doe-surface);
   }
 }
 

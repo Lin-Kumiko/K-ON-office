@@ -152,3 +152,10 @@ npx playwright test      # E2E：自动启动隔离后端（tests/.e2e-data）�
 | [PROGRESS.md](PROGRESS.md) | 进度、验证结果、下一步 |
 | [TEST_REPORT.md](TEST_REPORT.md) | 实际执行命令、结果、范围与限制 |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | 已知问题与边界 |
+
+## 7. 服务器部署与自动发布
+
+- 服务器布局：代码 `/opt/k-on-office`，数据 `/var/lib/k-on-office`，systemd 服务 `k-on-office`（仅监听 127.0.0.1:8000），nginx 反向代理。模板见 `deploy/`。
+- 自动发布：推送到 `main` 后，GitHub Actions（`.github/workflows/deploy.yml`）先跑后端测试与前端类型检查、单元测试、构建，全部通过才把发布包通过 SSH 送到服务器。
+- 服务器端由 `deploy/k-on-deploy.sh` 接收：备份代码与数据库 → 同步代码 → 依赖有变化时安装 → 数据库迁移 → 重启 → 健康检查；任何一步失败自动回滚。
+- 部署密钥在服务器上被限定为只能运行该接收脚本（forced command）。首次配置运行 `deploy/setup-auto-deploy.ps1`，它会生成密钥、写入服务器与 GitHub Secrets，并删除本地私钥。

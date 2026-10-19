@@ -7,7 +7,8 @@
         <div class="brand-sub" lang="ja">けいおん</div>
       </div>
     </div>
-    <nav class="nav" aria-label="主导航">
+    <nav ref="navEl" class="nav" aria-label="主导航">
+      <span class="indicator" :style="indicator" aria-hidden="true" />
       <section v-for="g in groups" :key="g.title" class="group">
         <div v-if="!collapsed" class="group-title">{{ g.title }}</div>
         <div v-else class="group-rule" />
@@ -25,12 +26,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { appRoutes } from '@/router'
 import { useAuth } from '@/stores/auth'
 
-defineProps<{ collapsed: boolean }>()
+const props = defineProps<{ collapsed: boolean }>()
 defineEmits(['navigate'])
 const auth = useAuth()
 const route = useRoute()
@@ -67,6 +68,23 @@ const groups = computed(() => {
   if (rest.length) out.push({ title: '其他', items: rest })
   return out.filter((g) => g.items.length)
 })
+
+// A single highlight that glides to the active item instead of jumping.
+const navEl = ref<HTMLElement>()
+const indicator = ref<Record<string, string>>({ opacity: '0' })
+function placeIndicator() {
+  const el = navEl.value?.querySelector<HTMLElement>('.item.on')
+  indicator.value = el
+    ? { opacity: '1', transform: `translate(${el.offsetLeft}px, ${el.offsetTop}px)`, width: `${el.offsetWidth}px`,
+        height: `${el.offsetHeight}px` }
+    : { ...indicator.value, opacity: '0' }
+}
+watch([active, groups, () => props.collapsed], () => nextTick(placeIndicator))
+onMounted(() => {
+  nextTick(placeIndicator)
+  window.addEventListener('resize', placeIndicator)
+})
+onUnmounted(() => window.removeEventListener('resize', placeIndicator))
 </script>
 
 <style scoped>
@@ -74,8 +92,11 @@ const groups = computed(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--doe-sidebar);
-  border-right: 1px solid var(--doe-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 1px 0 0 var(--glass-edge);
 }
 .brand {
   display: flex;
@@ -105,6 +126,7 @@ const groups = computed(() => {
   margin-top: 1px;
 }
 .nav {
+  position: relative;
   flex: 1;
   overflow-y: auto;
   padding: 4px 10px 16px;
@@ -122,7 +144,20 @@ const groups = computed(() => {
   margin: 4px 10px 8px;
   background: var(--doe-border);
 }
+.indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 9px;
+  background: var(--doe-brand-soft);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px color-mix(in srgb, var(--doe-brand) 14%, transparent);
+  transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.2, 1), height 0.3s ease, width 0.3s ease, opacity 0.2s;
+  pointer-events: none;
+}
 .item {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -141,8 +176,9 @@ const groups = computed(() => {
   background: var(--doe-hover);
   color: var(--doe-text);
 }
-.item.on {
-  background: var(--doe-brand-soft);
+.item.on,
+.item.on:hover {
+  background: transparent;
   color: var(--doe-brand);
   font-weight: 600;
 }
@@ -165,6 +201,7 @@ const groups = computed(() => {
   padding: 0;
 }
 @media (prefers-reduced-motion: reduce) {
+  .indicator,
   .item {
     transition: none;
   }

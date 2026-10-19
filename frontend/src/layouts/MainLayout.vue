@@ -57,7 +57,7 @@
       </el-header>
       <el-main class="main">
         <router-view v-slot="{ Component, route: r }">
-          <transition name="view-fade">
+          <transition name="view">
             <component :is="Component" :key="r.path" />
           </transition>
         </router-view>
@@ -141,10 +141,11 @@ onUnmounted(() => {
   gap: 6px;
   height: 60px;
   padding: 0 20px 0 14px;
-  background: var(--doe-header-bg);
-  backdrop-filter: saturate(1.6) blur(14px);
-  -webkit-backdrop-filter: saturate(1.6) blur(14px);
-  border-bottom: 1px solid var(--doe-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 1px 0 var(--glass-edge);
 }
 .title {
   margin-left: 4px;
@@ -167,8 +168,9 @@ onUnmounted(() => {
   margin-left: 6px;
   padding: 4px 10px 4px 4px;
   border-radius: 999px;
-  border: 1px solid var(--doe-border);
-  background: var(--doe-surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: 0 0 0 1px var(--glass-edge);
   cursor: pointer;
   outline: none;
   font-size: 14px;
@@ -184,8 +186,18 @@ onUnmounted(() => {
 }
 .main {
   padding: 0;
+  position: relative;
   overflow-y: auto;
-  background: var(--doe-bg);
+  overflow-x: hidden;
+  background: transparent;
+}
+/* the outgoing page fades in place while the next one slides in on top */
+.main > .view-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
 }
 .notes-head {
   display: flex;

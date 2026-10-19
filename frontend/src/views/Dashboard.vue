@@ -12,13 +12,23 @@
     <el-alert v-if="error" :title="error" type="error" show-icon class="mb" />
     <template v-if="data">
       <div class="grid cols-4 mb">
-        <div class="card stat" data-test="stat-pending"><span class="label">我的待办</span><span class="value">{{ data.stats.pending_tasks }}</span></div>
-        <div class="card stat"><span class="label">审批中的申请</span><span class="value">{{ data.stats.running_applications }}</span></div>
-        <div class="card stat"><span class="label">未读通知</span><span class="value">{{ data.stats.unread_notifications }}</span></div>
-        <div class="card stat">
+        <router-link class="card stat stat-link" to="/approvals?tab=todo" data-test="stat-pending">
+          <span class="label">我的待办</span><span class="value">{{ data.stats.pending_tasks }}</span>
+          <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
+        </router-link>
+        <router-link class="card stat stat-link" to="/approvals?tab=mine&status=running" data-test="stat-running">
+          <span class="label">审批中的申请</span><span class="value">{{ data.stats.running_applications }}</span>
+          <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
+        </router-link>
+        <router-link class="card stat stat-link" to="/notifications" data-test="stat-unread">
+          <span class="label">未读通知</span><span class="value">{{ data.stats.unread_notifications }}</span>
+          <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
+        </router-link>
+        <router-link class="card stat stat-link" :to="data.company_view ? '/employees' : '/leave'" data-test="stat-fourth">
           <span class="label">{{ data.company_view ? '在职人数（数据范围内）' : '可用年假' }}</span>
           <span class="value">{{ data.company_view ? data.stats.headcount : data.annual_leave ? hoursToDays(data.annual_leave.available_hours) : '-' }}</span>
-        </div>
+          <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
+        </router-link>
       </div>
       <div class="grid cols-2 mb">
         <div class="card">
@@ -152,6 +162,39 @@ onMounted(load)
 <style scoped>
 .mb {
   margin-bottom: 16px;
+}
+.stat-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s, box-shadow 0.18s;
+}
+.stat-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--el-color-primary-light-7);
+}
+.stat-link:hover .label {
+  color: var(--doe-brand);
+}
+.go {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  color: var(--doe-faint);
+  transition: transform 0.18s, color 0.18s;
+}
+.stat-link:hover .go {
+  color: var(--doe-brand);
+  transform: translateX(3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-link,
+  .go {
+    transition: none;
+  }
+  .stat-link:hover {
+    transform: none;
+  }
 }
 .row .muted {
   font-size: 13px;

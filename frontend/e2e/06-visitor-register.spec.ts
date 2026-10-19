@@ -37,12 +37,16 @@ test('访客可浏览公开页面，想操作时提示先登录；注册后才�
   await page.locator('input[data-test=auth-username]').fill('ui_newcomer')
   await page.locator('input[data-test=auth-password]').fill('Cake2026x')
   await page.locator('[data-test=auth-submit]').click()
+  const done = page.locator('.register-done')
+  await expect(done).toContainText('注册成功')
+  await expect(page).toHaveURL(/\/register/)
+  await done.getByRole('button', { name: '去登录' }).click()
   await expect(page).toHaveURL(/\/login\?.*username=ui_newcomer/)
   await expect(page.locator('[data-test=auth-notice]')).toHaveText('注册成功，请登录')
   await expect(page.locator('input[data-test=auth-username]')).toHaveValue('ui_newcomer')
   await page.locator('input[data-test=auth-password]').fill('Cake2026x')
   await page.locator('[data-test=auth-submit]').click()
-  await expect(page).toHaveURL(/\/leave|\/dashboard/)
+  await expect(page).toHaveURL(/^https?:\/\/[^/]+\/(leave|dashboard)(\?|$)/)
 
   // now the visitor is a member and can operate
   await page.goto('/attendance')

@@ -68,7 +68,7 @@ describe('AuthPage', () => {
     expect(w.find('[data-test=auth-error]').text()).toBe('用户名或密码错误')
   })
 
-  it('registers, then sends the user to the login form with the username filled in', async () => {
+  it('registers, confirms in a dialog, then sends the user to the login form with the username filled in', async () => {
     const fetchMock = respond(201, { id: 20, username: 'ui_fan', message: '注册成功，请登录' })
     vi.stubGlobal('fetch', fetchMock)
     const { w, router } = await setup('/register')
@@ -77,6 +77,12 @@ describe('AuthPage', () => {
     await w.find('form').trigger('submit')
     await settle()
     expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe('/api/auth/register')
+    // the dialog waits for confirmation: still on the register page
+    const box = document.querySelector('.register-done')
+    expect(box?.textContent).toContain('注册成功')
+    expect(router.currentRoute.value.name).toBe('register')
+    ;(box?.querySelector('.el-button--primary') as HTMLButtonElement).click()
+    await settle()
     expect(router.currentRoute.value.name).toBe('login')
     expect(router.currentRoute.value.query.username).toBe('ui_fan')
     expect(localStorage.getItem('doe_token')).toBeNull() // registering does not log in

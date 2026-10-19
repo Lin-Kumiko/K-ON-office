@@ -1,9 +1,9 @@
 <template>
   <el-container class="layout">
-    <el-aside v-if="!mobile" :width="app.collapsed ? '64px' : '220px'" class="aside">
+    <el-aside v-if="!mobile" :width="app.collapsed ? '68px' : '232px'" class="aside">
       <SideMenu :collapsed="app.collapsed" />
     </el-aside>
-    <el-drawer v-else v-model="drawer" direction="ltr" size="230px" :with-header="false" class="menu-drawer">
+    <el-drawer v-else v-model="drawer" direction="ltr" size="248px" :with-header="false" class="menu-drawer">
       <SideMenu :collapsed="false" @navigate="drawer = false" />
     </el-drawer>
     <el-container>
@@ -56,8 +56,10 @@
         </el-dropdown>
       </el-header>
       <el-main class="main">
-        <router-view v-slot="{ Component }">
-          <component :is="Component" />
+        <router-view v-slot="{ Component, route: r }">
+          <transition name="view-fade">
+            <component :is="Component" :key="r.path" />
+          </transition>
         </router-view>
       </el-main>
     </el-container>
@@ -127,39 +129,63 @@ onUnmounted(() => {
   height: 100vh;
 }
 .aside {
-  background: var(--doe-aside);
   transition: width 0.2s;
   overflow-x: hidden;
 }
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--doe-surface);
+  gap: 6px;
+  height: 60px;
+  padding: 0 20px 0 14px;
+  background: var(--doe-header-bg);
+  backdrop-filter: saturate(1.6) blur(14px);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
   border-bottom: 1px solid var(--doe-border);
-  height: 56px;
 }
 .title {
+  margin-left: 4px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
 }
 .spacer {
   flex: 1;
+}
+.header .el-button + .el-button {
+  margin-left: 0;
+}
+.bell {
+  margin: 0 2px;
 }
 .user {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--doe-border);
+  background: var(--doe-surface);
   cursor: pointer;
   outline: none;
+  font-size: 14px;
+}
+.user:hover {
+  background: var(--doe-hover);
 }
 .avatar {
-  background: var(--doe-sakura);
+  background: var(--doe-brand);
   color: #fff;
+  font-weight: 600;
+  font-size: 13px;
 }
 .main {
   padding: 0;
   overflow-y: auto;
+  background: var(--doe-bg);
 }
 .notes-head {
   display: flex;
@@ -168,12 +194,12 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 .note {
-  padding: 8px 4px;
-  border-bottom: 1px solid var(--doe-border);
+  padding: 9px 8px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .note:hover {
-  background: var(--doe-brand-soft);
+  background: var(--doe-hover);
 }
 .note-title {
   font-size: 13px;
@@ -184,6 +210,9 @@ onUnmounted(() => {
 @media (max-width: 720px) {
   .uname {
     display: none;
+  }
+  .user {
+    padding: 2px;
   }
 }
 </style>

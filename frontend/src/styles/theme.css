@@ -1,46 +1,86 @@
-/* Houkago Tea Time palette: cream, tea brown, sakura pink. Light by default, dark via html.dark */
+/*
+ * Visual system: cool neutral canvas, white surfaces, hairline borders, one plum accent.
+ * Light by default, dark via html.dark. Element Plus is themed through its CSS variables.
+ */
 :root {
-  --doe-bg: #faf6f0;
+  --doe-bg: #f6f6f8;
   --doe-surface: #ffffff;
-  --doe-text: #3b2f2a;
-  --doe-muted: #8a7a70;
-  --doe-brand: #b5653a;
-  --doe-brand-soft: #f6e6da;
-  --doe-sakura: #e88aa3;
-  --doe-border: #ece2d8;
-  --doe-aside: #3b2a22;
-  --doe-aside-text: #e9dccf;
-  --el-color-primary: #b5653a;
-  --el-color-primary-light-3: #cb8b67;
-  --el-color-primary-light-5: #daa88b;
-  --el-color-primary-light-7: #e9c7b2;
-  --el-color-primary-light-8: #f0d8ca;
-  --el-color-primary-light-9: #f8ece4;
-  --el-color-primary-dark-2: #91512e;
-  --el-border-radius-base: 8px;
-  --el-font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+  --doe-sidebar: #fbfbfc;
+  --doe-text: #1d1e22;
+  --doe-muted: #6c6f7a;
+  --doe-faint: #9a9da6;
+  --doe-border: #e7e7ec;
+  --doe-hover: #f1f1f4;
+  --doe-brand: #9e3a72;
+  --doe-brand-soft: #f5ebf1;
+  --doe-sakura: #e07ab0;
+  --doe-radius-panel: 16px;
+  --doe-radius-control: 10px;
+  --doe-header-bg: rgba(246, 246, 248, 0.78);
+
+  --el-color-primary: #9e3a72;
+  --el-color-primary-light-3: #bb759c;
+  --el-color-primary-light-5: #cf9db9;
+  --el-color-primary-light-7: #e2c4d5;
+  --el-color-primary-light-8: #ecd8e3;
+  --el-color-primary-light-9: #f5ebf1;
+  --el-color-primary-dark-2: #7e2e5b;
+  --el-color-danger: #d93d42;
+  --el-color-success: #2f8f5b;
+  --el-color-warning: #c27c0e;
+
+  --el-bg-color-page: var(--doe-bg);
+  --el-text-color-primary: var(--doe-text);
+  --el-text-color-regular: #3d3f46;
+  --el-text-color-secondary: var(--doe-muted);
+  --el-text-color-placeholder: var(--doe-faint);
+  --el-border-color: #dcdce3;
+  --el-border-color-light: var(--doe-border);
+  --el-border-color-lighter: #eeeef2;
+  --el-border-color-extra-light: #f3f3f6;
+  --el-fill-color-light: var(--doe-hover);
+  --el-fill-color-lighter: #f7f7f9;
+  --el-border-radius-base: var(--doe-radius-control);
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 999px;
+  --el-box-shadow-light: 0 8px 24px -12px rgba(20, 20, 30, 0.18), 0 0 0 1px rgba(20, 20, 30, 0.04);
+  --el-box-shadow: 0 16px 40px -16px rgba(20, 20, 30, 0.24), 0 0 0 1px rgba(20, 20, 30, 0.05);
+  --el-font-size-base: 14px;
+  --el-font-family: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'HarmonyOS Sans SC',
+    'PingFang SC', 'MiSans', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  color-scheme: light;
 }
 
 html.dark {
-  --doe-bg: #191412;
-  --doe-surface: #221b18;
-  --doe-text: #eee3d9;
-  --doe-muted: #a9998f;
-  --doe-brand: #d98a5f;
-  --doe-brand-soft: #3a2a22;
-  --doe-border: #3a302b;
-  --doe-aside: #120e0c;
-  --doe-aside-text: #d8c8ba;
-  --el-color-primary: #d98a5f;
-  --el-color-primary-light-3: #a8694a;
-  --el-color-primary-light-5: #7f513a;
-  --el-color-primary-light-7: #563a2b;
-  --el-color-primary-light-8: #432e23;
-  --el-color-primary-light-9: #2f221b;
-  --el-color-primary-dark-2: #e6a27d;
-  --el-bg-color: #221b18;
-  --el-bg-color-overlay: #2a221e;
-  --el-fill-color-blank: #221b18;
+  --doe-bg: #0f1013;
+  --doe-surface: #17181c;
+  --doe-sidebar: #131417;
+  --doe-text: #ecedf0;
+  --doe-muted: #9a9ca6;
+  --doe-faint: #6c6f7a;
+  --doe-border: #26282e;
+  --doe-hover: #1e2025;
+  --doe-brand: #e07ab0;
+  --doe-brand-soft: #2b1f2b;
+  --doe-header-bg: rgba(15, 16, 19, 0.75);
+
+  --el-color-primary: #e07ab0;
+  --el-color-primary-light-3: #a45d84;
+  --el-color-primary-light-5: #7c4966;
+  --el-color-primary-light-7: #533448;
+  --el-color-primary-light-8: #3f293a;
+  --el-color-primary-light-9: #2b1f2b;
+  --el-color-primary-dark-2: #e695c0;
+  --el-bg-color: #17181c;
+  --el-bg-color-overlay: #1c1d22;
+  --el-fill-color-blank: #17181c;
+  --el-text-color-regular: #c9cbd2;
+  --el-border-color: #33353c;
+  --el-border-color-lighter: #222429;
+  --el-border-color-extra-light: #1d1f23;
+  --el-fill-color-lighter: #1a1b1f;
+  --el-box-shadow-light: 0 8px 24px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
 }
 
 * {
@@ -55,40 +95,64 @@ body,
   background: var(--doe-bg);
   color: var(--doe-text);
   font-family: var(--el-font-family);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+::selection {
+  background: var(--el-color-primary-light-8);
+}
+
+/* ---------- page scaffolding ---------- */
+
 .page {
-  padding: 20px;
-  max-width: 1600px;
+  padding: 28px 32px 40px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
 .page-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
 .page-head h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .page-head .sub {
   color: var(--doe-muted);
-  font-size: 13px;
-  margin-top: 4px;
+  font-size: 14px;
+  margin-top: 6px;
 }
 
 .card {
   background: var(--doe-surface);
   border: 1px solid var(--doe-border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: var(--doe-radius-panel);
+  padding: 20px;
+}
+
+.card > b:first-child,
+.card-head b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  min-height: 28px;
 }
 
 .toolbar {
@@ -96,7 +160,11 @@ body,
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.toolbar .el-button + .el-button {
+  margin-left: 0;
 }
 
 .toolbar .spacer {
@@ -123,7 +191,7 @@ body,
 .stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .stat .label {
@@ -132,9 +200,12 @@ body,
 }
 
 .stat .value {
-  font-size: 26px;
-  font-weight: 600;
-  color: var(--doe-brand);
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--doe-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .muted {
@@ -148,11 +219,182 @@ body,
 .pager {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 16px;
+}
+
+/* list rows used by dashboard-like panels */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin: 0 -10px;
+  border-radius: var(--doe-radius-control);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.row:hover {
+  background: var(--doe-hover);
+}
+
+.row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Element Plus polish ---------- */
+
+.el-button {
+  font-weight: 500;
+  --el-button-hover-bg-color: var(--doe-hover);
+}
+
+.el-button--primary {
+  --el-button-hover-bg-color: var(--el-color-primary-dark-2);
+  --el-button-hover-border-color: var(--el-color-primary-dark-2);
+}
+
+.el-button.is-text:not(.is-disabled):hover,
+.el-button.is-link:not(.is-disabled):hover {
+  background-color: transparent;
+}
+
+.el-button.is-circle.is-text:not(.is-disabled):hover {
+  background-color: var(--doe-hover);
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  transition: box-shadow 0.12s;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset, 0 0 0 3px var(--el-color-primary-light-9);
 }
 
 .el-table {
-  --el-table-header-bg-color: var(--doe-brand-soft);
+  --el-table-header-bg-color: var(--doe-surface);
+  --el-table-header-text-color: var(--doe-muted);
+  --el-table-row-hover-bg-color: var(--doe-hover);
+  --el-table-border-color: var(--doe-border);
+  --el-table-bg-color: var(--doe-surface);
+  --el-table-tr-bg-color: var(--doe-surface);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.el-table--border {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.el-tag {
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.el-tabs__item {
+  font-weight: 500;
+}
+
+.el-tabs__nav-wrap::after {
+  height: 1px;
+  background-color: var(--doe-border);
+}
+
+.el-dialog {
+  border-radius: 18px;
+  padding: 22px 24px 20px;
+}
+
+.el-dialog__title {
+  font-weight: 600;
+}
+
+.el-message-box {
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+}
+
+.el-drawer {
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
+}
+
+.el-drawer.ltr {
+  border-radius: 0;
+}
+
+.el-card {
+  border-radius: var(--doe-radius-panel);
+  --el-card-border-color: var(--doe-border);
+}
+
+.el-card.is-always-shadow,
+.el-card.is-hover-shadow:hover {
+  box-shadow: none;
+}
+
+.el-alert {
+  border-radius: 12px;
+}
+
+.el-empty {
+  --el-empty-padding: 28px 0;
+}
+
+.el-empty__description p {
+  color: var(--doe-muted);
+}
+
+.el-popper.is-light,
+.el-dropdown__popper.el-popper {
+  border-radius: 12px;
+}
+
+.el-pagination {
+  --el-pagination-button-bg-color: transparent;
+}
+
+/* keyboard focus stays visible everywhere */
+:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
+}
+
+.el-input__inner:focus-visible,
+.el-textarea__inner:focus-visible {
+  outline: none;
+}
+
+/* route change: one quiet fade */
+.view-fade-enter-active {
+  transition: opacity 0.16s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-fade-enter-active,
+  .row {
+    transition: none;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -166,7 +408,13 @@ body,
 
 @media (max-width: 720px) {
   .page {
-    padding: 12px;
+    padding: 16px 16px 28px;
+  }
+  .page-head h2 {
+    font-size: 20px;
+  }
+  .card {
+    padding: 16px;
   }
   .grid.cols-4,
   .grid.cols-3,
@@ -178,6 +426,7 @@ body,
   }
   .el-drawer {
     width: 100vw !important;
+    border-radius: 0;
   }
 }
 

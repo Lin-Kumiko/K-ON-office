@@ -1,0 +1,24 @@
+[Unit]
+Description=K-ON Office (FastAPI + SQLite)
+After=network.target
+
+[Service]
+Type=simple
+User=kon
+Group=kon
+WorkingDirectory=/opt/k-on-office/backend
+EnvironmentFile=/etc/k-on-office.env
+ExecStart=/opt/k-on-office/backend/.venv/bin/python -m uvicorn app.main:create_app --factory \
+    --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/k-on-office
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target

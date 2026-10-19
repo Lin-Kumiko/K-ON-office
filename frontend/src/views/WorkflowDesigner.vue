@@ -317,7 +317,14 @@ function uid(prefix: string) {
 }
 function addNode(type: string) {
   const id = uid(type === 'approval' ? 'n' : type.slice(0, 2))
-  const node: any = { id, type, name: `${TYPE_LABEL[type]}节点`, x: 160 + (graph.nodes.length % 6) * 150, y: 80 + Math.floor(graph.nodes.length / 6) * 110, config: {} }
+  // Place new nodes inside the currently visible part of the canvas, staggered so they don't stack.
+  const el = canvas.value
+  const left = (el?.scrollLeft ?? 0) + W / 2 + 20
+  const right = Math.max(left, (el?.scrollLeft ?? 0) + (el?.clientWidth ?? 1100) - W / 2 - 20)
+  const step = graph.nodes.length % 6
+  const x = Math.min(right, left + 40 + step * 150)
+  const y = (el?.scrollTop ?? 0) + 80 + Math.floor(graph.nodes.length / 6) * 110
+  const node: any = { id, type, name: `${TYPE_LABEL[type]}节点`, x: Math.round(x / 10) * 10, y: Math.round(y / 10) * 10, config: {} }
   if (type === 'approval') node.config = { approver: { type: 'direct_manager' }, mode: 'or', on_empty: 'fallback' }
   if (type === 'cc') node.config = { targets: { type: 'role', role_code: 'hr' } }
   graph.nodes.push(node)

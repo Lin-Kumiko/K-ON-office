@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h2>{{ greeting }}，{{ data?.user.employee_name || data?.user.name }}</h2>
-        <div class="sub">{{ today }} · 今天也要认真工作，然后喝茶</div>
+        <div class="sub">{{ todayLabel }}，今天也要认真工作，然后喝茶</div>
       </div>
       <div class="toolbar">
         <el-button v-for="q in data?.quick_entries || []" :key="q.key" @click="router.push('/' + q.key)">{{ q.title }}</el-button>
@@ -108,7 +108,7 @@ const drawer = ref(false)
 const current = ref<number | null>(null)
 const schedDialog = ref(false)
 const sched = reactive({ title: '', start_at: '', end_at: '', remind_at: '' })
-const today = todayStr()
+const todayLabel = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date(todayStr()))
 const hour = new Date().getHours()
 const greeting = hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
 
@@ -153,28 +153,8 @@ onMounted(load)
 .mb {
   margin-bottom: 16px;
 }
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 4px;
-  border-bottom: 1px dashed var(--doe-border);
-  cursor: pointer;
-  font-size: 14px;
-}
-.row:hover {
-  background: var(--doe-brand-soft);
-}
-.row-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.row .muted {
+  font-size: 13px;
   white-space: nowrap;
 }
 .unread {

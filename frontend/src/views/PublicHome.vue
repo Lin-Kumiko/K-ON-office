@@ -104,78 +104,78 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 28px 32px;
+  gap: 32px;
+  padding: 36px 40px;
   margin-bottom: 16px;
-  border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(115deg, #8c7bc6 0%, #f28ca0 58%, #f7b58b 100%);
+  border-radius: var(--doe-radius-panel);
+  background: var(--doe-surface);
+  border: 1px solid var(--doe-border);
 }
 .banner h2 {
-  margin: 0 0 6px;
-  font-family: 'KaiTi', 'STKaiti', 'Kaiti SC', serif;
-  font-size: 34px;
-  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 .banner p {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   max-width: 60ch;
+  font-size: 16px;
+  color: var(--el-text-color-regular);
 }
 .facts {
-  opacity: 0.92;
+  color: var(--doe-muted);
+  font-size: 14px !important;
 }
 .banner-actions {
-  margin-top: 14px;
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+}
+.banner-actions .el-button {
+  margin: 0;
 }
 .banner-cup {
-  width: 110px;
-  background: #fff4ea;
-  border-radius: 24px;
-  padding: 14px;
+  width: 120px;
+  flex: none;
+  padding: 18px;
+  border-radius: 28px;
+  background: var(--doe-brand-soft);
 }
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 4px;
+button.row {
+  width: calc(100% + 20px);
   border: none;
-  border-bottom: 1px dashed var(--doe-border);
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
-  cursor: pointer;
 }
 .row.static {
   cursor: default;
 }
-.row:not(.static):hover {
-  background: var(--doe-brand-soft);
+.row.static:hover {
+  background: none;
 }
-.row-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.row .muted {
+  font-size: 13px;
   white-space: nowrap;
+}
+.card p.muted {
+  font-size: 14px;
 }
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 4px;
 }
 .actions .el-button {
   margin: 0;
 }
 @media (max-width: 720px) {
   .banner {
-    padding: 22px;
+    padding: 24px 20px;
   }
   .banner-cup {
     display: none;

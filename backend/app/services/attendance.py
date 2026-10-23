@@ -117,8 +117,8 @@ class DayResult:
 
 
 def compute_day(rule: AttendanceRule, d: date, punches: list[datetime], workday: bool, holiday_kind: str | None,
-                leave_halves: set[str], is_travel: bool, now: datetime) -> DayResult:
-    st = shift_times(rule, d)
+                leave_halves: set[str], is_travel: bool, now: datetime, st: ShiftTimes | None = None) -> DayResult:
+    st = st or shift_times(rule, d)
     punches = sorted(p for p in punches if st.window_start <= p <= st.window_end)
     if not workday:
         return DayResult("holiday" if holiday_kind == "holiday" else "rest", None, None,
@@ -199,6 +199,9 @@ def compute_range(db: Session, employees: list[Employee], start: date, end: date
     for eid, wd, at in punch_rows:
         punches.setdefault((eid, wd), []).append(at)
     rules: dict[int, AttendanceRule] = {}
+    # shift times depend only on (rule, day); computing them once per pair instead of once per employee-day
+    # keeps whole-company ranges cheap
+    shifts: dict[tuple[int, date], ShiftTimes] = {}
     for emp in employees:
         rule = rules.get(emp.attendance_rule_id or 0)
         if rule is None:
@@ -212,8 +215,11 @@ def compute_range(db: Session, employees: list[Employee], start: date, end: date
             if d > today and not h and not is_tr:
                 out[key] = None
                 continue
+            st = shifts.get((rule.id, d))
+            if st is None:
+                st = shifts[(rule.id, d)] = shift_times(rule, d)
             out[key] = compute_day(rule, d, punches.get(key, []), calendar.is_workday(d, hmap), hmap.get(d), h,
-                                   is_tr, now)
+                                   is_tr, now, st)
     return out
 
 

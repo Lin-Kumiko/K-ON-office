@@ -311,18 +311,32 @@ def _task_out(t: WfTask, inst: WfInstance, names: dict) -> TaskOut:
                    initiator_name=names.get(inst.initiator_id))
 
 
+def _inst_outs(db: Session, insts: list[WfInstance], names: dict) -> list[InstanceOut]:
+    """Serialise instances with three batched lookups instead of several queries per instance."""
+    if not insts:
+        return []
+    pend: dict[int, list[tuple[str, int]]] = {}
+    for iid, node_name, assignee_id in db.execute(
+            select(WfTask.instance_id, WfTask.node_name, WfTask.assignee_id)
+            .where(WfTask.instance_id.in_([i.id for i in insts]), WfTask.status == "pending")):
+        pend.setdefault(iid, []).append((node_name, assignee_id))
+    def_names = dict(db.execute(select(WfDefinition.id, WfDefinition.name)
+                                .where(WfDefinition.id.in_({i.definition_id for i in insts}))).all())
+    versions = dict(db.execute(select(WfDefinitionVersion.id, WfDefinitionVersion.version)
+                               .where(WfDefinitionVersion.id.in_({i.version_id for i in insts}))).all())
+    return [InstanceOut(id=i.id, definition_id=i.definition_id, definition_name=def_names[i.definition_id],
+                        version=versions[i.version_id], business_type=i.business_type,
+                        business_type_name=registry.BUSINESS_TYPES.get(i.business_type, {}).get("name", ""),
+                        business_id=i.business_id, title=i.title, initiator_id=i.initiator_id,
+                        initiator_name=names.get(i.initiator_id), status=i.status, variables=i.variables or {},
+                        started_at=i.started_at, ended_at=i.ended_at,
+                        current_nodes=sorted({n for n, _ in pend.get(i.id, [])}),
+                        current_assignees=sorted({names.get(a, "?") for _, a in pend.get(i.id, [])}))
+            for i in insts]
+
+
 def _inst_out(db: Session, i: WfInstance, names: dict) -> InstanceOut:
-    pend = db.scalars(select(WfTask).where(WfTask.instance_id == i.id, WfTask.status == "pending")).all()
-    d = db.get(WfDefinition, i.definition_id)
-    v = db.get(WfDefinitionVersion, i.version_id)
-    return InstanceOut(id=i.id, definition_id=i.definition_id, definition_name=d.name, version=v.version,
-                       business_type=i.business_type,
-                       business_type_name=registry.BUSINESS_TYPES.get(i.business_type, {}).get("name", ""),
-                       business_id=i.business_id, title=i.title, initiator_id=i.initiator_id,
-                       initiator_name=names.get(i.initiator_id), status=i.status, variables=i.variables or {},
-                       started_at=i.started_at, ended_at=i.ended_at,
-                       current_nodes=sorted({t.node_name for t in pend}),
-                       current_assignees=sorted({names.get(t.assignee_id, "?") for t in pend}))
+    return _inst_outs(db, [i], names)[0]
 
 
 def _can_view_instance(db: Session, cu: CurrentUser, i: WfInstance) -> bool:
@@ -354,7 +368,7 @@ def list_instances(scope: str = Query("mine", pattern="^(mine|all|related)$"), s
         stmt = stmt.where(WfInstance.title.ilike(f"%{q}%"))
     names = _names(db)
     return paginate(db, stmt, page, {"id": WfInstance.id, "started_at": WfInstance.started_at},
-                    WfInstance.id.desc(), lambda i: _inst_out(db, i, names))
+                    WfInstance.id.desc(), transform_rows=lambda rows: _inst_outs(db, rows, names))
 
 
 @router.get("/instances/{inst_id}", response_model=InstanceDetail, summary="实例详情：流程图、任务、完整审批历史")

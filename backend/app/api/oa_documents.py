@@ -10,7 +10,8 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..core.common import audit, paginate
-from ..core.deps import require_view, CurrentUser, PageParams, department_subtree, get_db, get_write_db, require
+from ..core.deps import (require_view, CurrentUser, PageParams, department_subtree, get_db, get_write_db,
+                         own_department_ancestors, require)
 from ..core.errors import Conflict, Forbidden, NotFound, ValidationFailed
 from ..models import Department, DocCategory, Document, DocumentLog, DocumentVersion, User
 from .common import ERRORS, Msg, Page
@@ -142,8 +143,7 @@ def list_documents(q: str | None = Query(None, max_length=64), category_id: int 
     if not cu.has("document:manage"):
         conds = [Document.visibility == "public", Document.owner_id == cu.id]
         if cu.employee is not None:
-            depts = [d for d in db.scalars(select(Department.id))
-                     if cu.employee.department_id in department_subtree(db, d)]
+            depts = own_department_ancestors(db, cu)
             conds.append((Document.visibility == "department") & Document.department_id.in_(depts))
         stmt = stmt.where(or_(*conds))
     if category_id:

@@ -54,6 +54,7 @@ class CurrentUser:
     session_id: int
     ip: str | None = None
     _dept_cache: set[int] | None = field(default=None, repr=False)
+    _ancestor_cache: set[int] | None = field(default=None, repr=False)
 
     @property
     def visitor(self) -> bool:
@@ -168,6 +169,25 @@ def department_subtree(db: Session, root_id: int) -> set[int]:
         out.add(cur)
         stack.extend(children.get(cur, []))
     return out
+
+
+def own_department_ancestors(db: Session, cu: CurrentUser) -> set[int]:
+    """The user's department plus all of its ancestors (cached per request).
+
+    ``x in department_subtree(db, d)`` is equivalent to ``d in department_ancestors(x)``, so visibility checks
+    against many scoped departments need one query instead of one per department.
+    """
+    if cu.employee is None:
+        return set()
+    if cu._ancestor_cache is None:
+        parent = dict(db.execute(select(Department.id, Department.parent_id)).all())
+        out: set[int] = set()
+        cur = cu.employee.department_id
+        while cur is not None and cur not in out:
+            out.add(cur)
+            cur = parent.get(cur)
+        cu._ancestor_cache = out
+    return cu._ancestor_cache
 
 
 def scope_department_ids(db: Session, cu: CurrentUser) -> set[int] | None:

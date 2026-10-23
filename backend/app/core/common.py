@@ -33,7 +33,9 @@ def notify(db: Session, user_id: int | None, category: str, title: str, content:
 
 
 def paginate(db: Session, stmt, page: PageParams, sort_map: dict[str, Any] | None = None,
-             default_order=None, transform: Callable | None = None) -> dict:
+             default_order=None, transform: Callable | None = None,
+             transform_rows: Callable[[list], list] | None = None) -> dict:
+    """``transform`` maps one row; ``transform_rows`` maps the whole page at once (lets callers batch lookups)."""
     total = db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery()))
     if page.sort and sort_map:
         desc = page.sort.startswith("-")
@@ -47,7 +49,10 @@ def paginate(db: Session, stmt, page: PageParams, sort_map: dict[str, Any] | Non
         stmt = stmt.order_by(*default_order) if isinstance(default_order, (list, tuple)) else stmt.order_by(
             default_order)
     rows = db.execute(stmt.offset(page.offset).limit(page.page_size)).scalars().all()
-    items = [transform(r) for r in rows] if transform else rows
+    if transform_rows:
+        items = transform_rows(rows)
+    else:
+        items = [transform(r) for r in rows] if transform else rows
     return {"items": items, "total": total, "page": page.page, "page_size": page.page_size}
 
 

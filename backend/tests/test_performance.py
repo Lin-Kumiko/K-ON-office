@@ -115,6 +115,8 @@ def test_performance_profile(app):
         total = time.perf_counter() - t
         RESULTS["batch_approve_100"] = {"total_s": round(total, 2), "per_task_ms": round(total * 10, 1)}
         RESULTS["task_list_after_batch"] = _time(lambda: ok(mgr.get("/api/workflow/tasks?status=done&page_size=50")))
+        RESULTS["instance_list_related_page50"] = _time(
+            lambda: ok(mgr.get("/api/workflow/instances?scope=related&page_size=50")))
 
     # multi-user requests: 4 worker threads, 20 workflow submissions + dashboard reads each
     with TestClient(app) as c:

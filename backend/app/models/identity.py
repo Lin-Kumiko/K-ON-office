@@ -76,8 +76,8 @@ class UserSession(CreatedMixin, Base):
 class LoginLog(CreatedMixin, Base):
     __tablename__ = "login_logs"
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(String(64))
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    username: Mapped[str] = mapped_column(String(64), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     success: Mapped[bool] = mapped_column(Boolean)
     reason: Mapped[str | None] = mapped_column(String(64))
     ip: Mapped[str | None] = mapped_column(String(64))

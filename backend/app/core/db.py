@@ -30,6 +30,8 @@ def make_engine(url: str) -> Engine:
         cur.execute("PRAGMA journal_mode=WAL")
         cur.execute("PRAGMA synchronous=NORMAL")
         cur.execute("PRAGMA busy_timeout=30000")
+        cur.execute("PRAGMA cache_size=-16000")  # 16 MB page cache per connection (default is 2 MB)
+        cur.execute("PRAGMA temp_store=MEMORY")  # sorts / temp b-trees for ORDER BY and GROUP BY stay in RAM
         cur.close()
 
     @event.listens_for(engine, "begin")
@@ -52,4 +54,10 @@ class Database:
         return (self.write_session if write else self.read_session)()
 
     def dispose(self) -> None:
+        try:
+            with self.engine.connect() as conn:
+                # lets SQLite refresh statistics for tables whose size changed a lot (cheap, recommended on close)
+                conn.exec_driver_sql("PRAGMA optimize")
+        except Exception:  # pragma: no cover - best effort on shutdown
+            pass
         self.engine.dispose()

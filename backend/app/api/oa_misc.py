@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 
 from ..core import timeutil
 from ..core.common import audit, idempotent, jsonable, notify, paginate
-from ..core.deps import require_view, viewer, CurrentUser, PageParams, current_user, department_subtree, get_db, require
+from ..core.deps import (require_view, viewer, CurrentUser, PageParams, current_user, department_subtree, get_db,
+                         own_department_ancestors, require)
 from ..core.errors import Conflict, Forbidden, InvalidState, NotFound, ValidationFailed
 from ..models import (Announcement, AnnouncementCategory, AnnouncementRead, Department, Employee, MeetingBooking,
                       MeetingRoom, Notification, Schedule, User)
@@ -336,10 +337,7 @@ def _visible_to_member(db: Session, cu: CurrentUser, a: Announcement) -> bool:
         return True
     if cu.employee is None:
         return False
-    for d in a.scope_department_ids or []:
-        if cu.employee.department_id in department_subtree(db, d):
-            return True
-    return False
+    return bool(set(a.scope_department_ids or []) & own_department_ancestors(db, cu))
 
 
 @router.get("/announcements/categories", summary="公告分类")

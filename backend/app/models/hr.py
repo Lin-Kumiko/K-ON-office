@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import (Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text,
+from sqlalchemy import (Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, String, Text,
                         UniqueConstraint)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,7 +34,10 @@ class AttendanceRule(TimestampMixin, Base):
 
 class AttendancePunch(CreatedMixin, Base):
     __tablename__ = "attendance_punches"
-    __table_args__ = (UniqueConstraint("employee_id", "punched_at"),)
+    __table_args__ = (
+        UniqueConstraint("employee_id", "punched_at"),
+        Index("ix_attendance_punches_employee_work_date", "employee_id", "work_date"),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), index=True)
     punched_at: Mapped[datetime] = mapped_column(DateTime)

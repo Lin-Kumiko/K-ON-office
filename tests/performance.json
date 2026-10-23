@@ -2,65 +2,71 @@
   "volume": {
     "employees": 1003,
     "punches": 29700,
-    "insert_seconds": 0.35
+    "insert_seconds": 0.33
   },
   "employee_list_page50": {
     "n": 10,
-    "p50_ms": 7.6,
-    "p95_ms": 8.2,
-    "max_ms": 11.4
+    "p50_ms": 6.2,
+    "p95_ms": 6.9,
+    "max_ms": 9.6
   },
   "employee_list_page200_filter_dept": {
     "n": 10,
-    "p50_ms": 11.1,
-    "p95_ms": 13.1,
-    "max_ms": 13.4
+    "p50_ms": 9.4,
+    "p95_ms": 9.9,
+    "max_ms": 10.9
   },
   "employee_options_all": {
     "n": 5,
-    "p50_ms": 16.1,
-    "p95_ms": 16.5,
-    "max_ms": 17.1
+    "p50_ms": 13.7,
+    "p95_ms": 16.0,
+    "max_ms": 19.0
   },
   "attendance_monthly_all": {
     "n": 3,
-    "p50_ms": 225.0,
-    "p95_ms": 225.0,
-    "max_ms": 228.5
+    "p50_ms": 120.3,
+    "p95_ms": 120.3,
+    "max_ms": 139.7
   },
   "attendance_rebuild_month_all": {
     "n": 1,
-    "p50_ms": 1051.6,
-    "p95_ms": 1051.6,
-    "max_ms": 1051.6
+    "p50_ms": 917.6,
+    "p95_ms": 917.6,
+    "max_ms": 917.6
   },
   "reports_overview": {
     "n": 3,
-    "p50_ms": 215.1,
-    "p95_ms": 215.1,
-    "max_ms": 218.3
+    "p50_ms": 115.9,
+    "p95_ms": 115.9,
+    "max_ms": 119.6
   },
   "dashboard_summary_ceo": {
     "n": 5,
-    "p50_ms": 7.1,
-    "p95_ms": 7.6,
-    "max_ms": 13.4
+    "p50_ms": 6.9,
+    "p95_ms": 8.4,
+    "max_ms": 11.8
   },
   "batch_approve_100": {
-    "total_s": 1.79,
-    "per_task_ms": 17.9
+    "total_s": 1.0,
+    "per_task_ms": 10.0
   },
   "task_list_after_batch": {
     "n": 10,
-    "p50_ms": 22.0,
-    "p95_ms": 24.6,
-    "max_ms": 26.3
+    "p50_ms": 11.4,
+    "p95_ms": 13.0,
+    "max_ms": 16.3
+  },
+  "instance_list_related_page50": {
+    "n": 10,
+    "p50_ms": 5.8,
+    "p95_ms": 6.3,
+    "max_ms": 7.3
   },
   "concurrent_4_users_submit_and_read": {
     "requests": 40,
-    "wall_s": 0.53,
-    "p50_ms": 45.1,
-    "max_ms": 384.0,
+    "wall_s": 0.3,
+    "p50_ms": 29.2,
+    "max_ms": 154.1,
     "errors": 0
   },
   "note": "In-process HTTP (TestClient) on an isolated SQLite file; single process, Windows dev machine."

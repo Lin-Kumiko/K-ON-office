@@ -49,6 +49,8 @@ class WfInstance(Base):
         Index("uq_wf_instances_running_business", "business_type", "business_id", unique=True,
               sqlite_where=text("status = 'running'")),
         Index("ix_wf_instances_initiator", "initiator_id", "status"),
+        Index("ix_wf_instances_subject_user", "subject_user_id"),
+        Index("ix_wf_instances_started_at", "started_at"),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     definition_id: Mapped[int] = mapped_column(ForeignKey("wf_definitions.id", ondelete="RESTRICT"))

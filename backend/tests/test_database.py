@@ -103,3 +103,5 @@ def test_sqlite_pragmas(app):
         assert c.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
         assert c.exec_driver_sql("PRAGMA journal_mode").scalar() == "wal"
         assert c.exec_driver_sql("PRAGMA busy_timeout").scalar() == 30000
+        assert c.exec_driver_sql("PRAGMA cache_size").scalar() == -16000
+        assert c.exec_driver_sql("PRAGMA temp_store").scalar() == 2  # MEMORY

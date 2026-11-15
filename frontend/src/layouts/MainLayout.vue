@@ -13,8 +13,13 @@
         </el-button>
         <span class="title">{{ route.meta.title }}</span>
         <span class="spacer" />
+        <button type="button" class="find" data-test="palette-open" aria-label="搜索页面或操作" @click="app.palette = true">
+          <el-icon size="15"><Search /></el-icon>
+          <span class="find-text">搜索</span>
+          <span class="find-keys"><kbd>{{ modKey }}</kbd><kbd>K</kbd></span>
+        </button>
         <el-tooltip :content="app.theme === 'dark' ? '切换浅色' : '切换深色'">
-          <el-button text circle data-test="theme-toggle" @click="app.toggleTheme()" aria-label="切换主题">
+          <el-button text circle data-test="theme-toggle" @click="toggleTheme" aria-label="切换主题">
             <el-icon size="18"><Moon v-if="app.theme === 'light'" /><Sunny v-else /></el-icon>
           </el-button>
         </el-tooltip>
@@ -63,6 +68,7 @@
         </router-view>
       </el-main>
     </el-container>
+    <CommandPalette />
   </el-container>
 </template>
 
@@ -74,7 +80,9 @@ import { useApp } from '@/stores/app'
 import { api } from '@/api/http'
 import { fmtDateTime } from '@/utils/format'
 import SideMenu from '@/components/SideMenu.vue'
+import CommandPalette from '@/components/CommandPalette.vue'
 
+const modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 const auth = useAuth()
 const app = useApp()
 const route = useRoute()
@@ -84,6 +92,13 @@ const mobile = ref(window.innerWidth < 768)
 const notes = ref<any[]>([])
 const initial = computed(() => (auth.me?.display_name || '?').slice(0, 1))
 let timer: number | undefined
+
+function toggleTheme(e: MouseEvent) {
+  // keyboard activation has no pointer position; start from the button itself
+  const box = (e.currentTarget as HTMLElement | null)?.getBoundingClientRect()
+  const at = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : undefined
+  app.toggleTheme(at)
+}
 
 function onResize() {
   mobile.value = window.innerWidth < 768
@@ -154,6 +169,49 @@ onUnmounted(() => {
 }
 .spacer {
   flex: 1;
+}
+.find {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  margin-right: 6px;
+  padding: 0 8px 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: 0 0 0 1px var(--glass-edge);
+  color: var(--doe-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.12s, background-color 0.12s;
+}
+.find:hover {
+  color: var(--doe-text);
+  background: var(--doe-hover);
+}
+.find-text {
+  min-width: 72px;
+  text-align: left;
+}
+.find-keys {
+  display: inline-flex;
+  gap: 3px;
+}
+@media (max-width: 720px) {
+  .find {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+  .find-text,
+  .find-keys {
+    display: none;
+  }
 }
 .header .el-button + .el-button {
   margin-left: 0;

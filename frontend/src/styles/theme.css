@@ -18,16 +18,19 @@
   --doe-radius-control: 10px;
   --doe-header-bg: rgba(246, 246, 248, 0.78);
   /* liquid glass */
-  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg: rgba(255, 255, 255, 0.56);
   --glass-bg-strong: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(255, 255, 255, 0.7);
   --glass-edge: rgba(20, 20, 40, 0.07);
   --glass-highlight: rgba(255, 255, 255, 0.95);
   --glass-shadow: 0 10px 34px -14px rgba(48, 26, 60, 0.16), 0 2px 6px -2px rgba(48, 26, 60, 0.05);
   --glass-blur: blur(22px) saturate(1.9);
-  --ambient-1: rgba(214, 120, 174, 0.28);
-  --ambient-2: rgba(110, 150, 230, 0.24);
-  --ambient-3: rgba(250, 180, 130, 0.18);
+  --ambient-1: rgba(214, 120, 174, 0.36);
+  --ambient-2: rgba(110, 150, 230, 0.3);
+  --ambient-3: rgba(250, 180, 130, 0.26);
+  --glass-spot: rgba(224, 122, 176, 0.13);
+  --skeleton-a: rgba(20, 20, 40, 0.06);
+  --skeleton-b: rgba(20, 20, 40, 0.12);
 
   --el-color-primary: #9e3a72;
   --el-color-primary-light-3: #bb759c;
@@ -80,9 +83,12 @@ html.dark {
   --glass-edge: rgba(0, 0, 0, 0.4);
   --glass-highlight: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 12px 36px -14px rgba(0, 0, 0, 0.6);
-  --ambient-1: rgba(190, 80, 150, 0.2);
-  --ambient-2: rgba(70, 100, 200, 0.18);
-  --ambient-3: rgba(200, 120, 80, 0.1);
+  --ambient-1: rgba(190, 80, 150, 0.26);
+  --ambient-2: rgba(70, 100, 200, 0.24);
+  --ambient-3: rgba(200, 120, 80, 0.14);
+  --glass-spot: rgba(255, 255, 255, 0.07);
+  --skeleton-a: rgba(255, 255, 255, 0.05);
+  --skeleton-b: rgba(255, 255, 255, 0.11);
 
   --el-color-primary: #e07ab0;
   --el-color-primary-light-3: #a45d84;
@@ -582,4 +588,115 @@ html.dark .el-button:not(.el-button--primary):not(.el-button--danger):not(.el-bu
 
 .dt-wrap {
   display: inline-flex;
+}
+
+/* ---------- light that follows the pointer across glass panels ---------- */
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 0%), var(--glass-spot), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .card:hover::after {
+    opacity: 1;
+  }
+}
+
+/* ---------- small shared pieces ---------- */
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid var(--doe-border);
+  background: var(--doe-surface);
+  color: var(--doe-muted);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.skeleton {
+  display: inline-block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--skeleton-a) 25%, var(--skeleton-b) 45%, var(--skeleton-a) 65%);
+  background-size: 300% 100%;
+  animation: skeleton 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.el-button--primary:not(.is-link):not(.is-text):not(.is-plain):not(.is-disabled) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 6px 16px -8px var(--el-color-primary);
+}
+
+/* slim scrollbars that stay out of the way */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--doe-muted) 38%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background: color-mix(in srgb, var(--doe-muted) 38%, transparent);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- theme switch: the new theme spreads out from the button ---------- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+  to {
+    clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+  .card::after {
+    display: none;
+  }
 }

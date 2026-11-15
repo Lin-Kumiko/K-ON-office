@@ -37,4 +37,18 @@ onAuthProblem({
 })
 
 useApp().applyTheme()
+
+// Glass panels catch a soft light under the pointer (see .card::after in theme.css).
+let lightFrame = 0
+document.addEventListener('pointermove', (e) => {
+  if (lightFrame || e.pointerType === 'touch') return
+  lightFrame = requestAnimationFrame(() => {
+    lightFrame = 0
+    const card = (e.target as Element | null)?.closest?.<HTMLElement>('.card')
+    if (!card) return
+    const box = card.getBoundingClientRect()
+    card.style.setProperty('--mx', `${e.clientX - box.left}px`)
+    card.style.setProperty('--my', `${e.clientY - box.top}px`)
+  })
+}, { passive: true })
 app.mount('#app')

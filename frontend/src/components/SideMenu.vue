@@ -28,8 +28,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { appRoutes } from '@/router'
 import { useAuth } from '@/stores/auth'
+import { visibleMenus } from '@/utils/menus'
 
 const props = defineProps<{ collapsed: boolean }>()
 defineEmits(['navigate'])
@@ -46,15 +46,7 @@ const GROUPS: [string, string[]][] = [
 
 // Visitors see the whole system (except administration); pages they cannot open yet carry a lock and
 // ask them to log in when clicked (handled by the router guard).
-const menus = computed(() =>
-  appRoutes
-    .filter((r) => !r.meta?.hidden)
-    .filter((r) => (auth.loggedIn
-      ? auth.canAny(r.meta?.perm as string | string[] | undefined) || (r.name === 'attendance' && auth.can('attendance:punch'))
-      : !r.meta?.adminOnly))
-    .map((r) => ({ path: r.path, name: r.name as string, title: r.meta?.title as string, icon: r.meta?.icon as string,
-                   locked: !auth.loggedIn && !r.meta?.visitor })),
-)
+const menus = computed(() => visibleMenus(auth))
 
 const groups = computed(() => {
   const byName = new Map(menus.value.map((m) => [m.name, m]))

@@ -1,30 +1,35 @@
 <template>
   <!-- Original vector artwork: an after-school light-music clubroom at dusk (no characters). -->
-  <div class="scene" aria-hidden="true">
+  <div class="scene" :class="phase" :style="{ background: c.wall[1] }" aria-hidden="true">
     <svg class="room" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="as-wall" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#E6B9A6" />
-          <stop offset="1" stop-color="#C98E86" />
+          <stop offset="0" :stop-color="c.wall[0]" />
+          <stop offset="1" :stop-color="c.wall[1]" />
         </linearGradient>
         <linearGradient id="as-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#8C7BC6" />
-          <stop offset="0.55" stop-color="#F28CA0" />
-          <stop offset="1" stop-color="#F7B58B" />
+          <stop offset="0" :stop-color="c.sky[0]" />
+          <stop offset="0.55" :stop-color="c.sky[1]" />
+          <stop offset="1" :stop-color="c.sky[2]" />
         </linearGradient>
         <radialGradient id="as-glow" cx="0.28" cy="0.42" r="0.6">
-          <stop offset="0" stop-color="#FFD9A0" stop-opacity="0.55" />
-          <stop offset="1" stop-color="#FFD9A0" stop-opacity="0" />
+          <stop offset="0" :stop-color="c.glow" :stop-opacity="c.glowOpacity" />
+          <stop offset="1" :stop-color="c.glow" stop-opacity="0" />
         </radialGradient>
         <linearGradient id="as-floor" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#9C6B43" />
-          <stop offset="1" stop-color="#6E4429" />
+          <stop offset="0" :stop-color="c.floor[0]" />
+          <stop offset="1" :stop-color="c.floor[1]" />
         </linearGradient>
         <linearGradient id="as-burst" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="#F0A23B" />
           <stop offset="0.6" stop-color="#C2412E" />
           <stop offset="1" stop-color="#6B1A1A" />
         </linearGradient>
+        <radialGradient id="as-lamp" gradientUnits="userSpaceOnUse" cx="700" cy="250" r="560">
+          <stop offset="0" stop-color="#FFC774" stop-opacity="0.5" />
+          <stop offset="0.45" stop-color="#FFB868" stop-opacity="0.16" />
+          <stop offset="1" stop-color="#FFB868" stop-opacity="0" />
+        </radialGradient>
       </defs>
 
       <!-- wall, light from the window -->
@@ -35,10 +40,14 @@
       <g transform="translate(70 70)">
         <rect x="-14" y="-14" width="588" height="508" rx="6" fill="#F4E6DA" />
         <rect width="560" height="480" fill="url(#as-sky)" />
-        <circle cx="300" cy="400" r="70" fill="#FFE2B0" opacity="0.9" />
+        <g v-if="phase === 'night'" fill="#FFFFFF">
+          <circle v-for="(s, i) in STARS" :key="i" class="star" :cx="s[0]" :cy="s[1]" :r="s[2]" :style="{ animationDelay: `${i * 0.6}s` }" />
+        </g>
+        <circle :cx="c.sun[0]" :cy="c.sun[1]" :r="c.sun[2]" :fill="c.sunFill" opacity="0.92" />
+        <circle v-if="phase === 'night'" :cx="c.sun[0] + 20" :cy="c.sun[1] - 12" :r="c.sun[2] - 6" :fill="c.sky[0]" />
         <!-- distant school roofs -->
-        <path d="M0 410 L90 380 L170 400 L260 360 L340 395 L430 370 L560 400 L560 480 L0 480 Z" fill="#7A5A8E" opacity="0.55" />
-        <path d="M0 440 L120 425 L240 445 L380 420 L560 440 L560 480 L0 480 Z" fill="#5E466F" opacity="0.6" />
+        <path d="M0 410 L90 380 L170 400 L260 360 L340 395 L430 370 L560 400 L560 480 L0 480 Z" :fill="c.hills[0]" opacity="0.55" />
+        <path d="M0 440 L120 425 L240 445 L380 420 L560 440 L560 480 L0 480 Z" :fill="c.hills[1]" opacity="0.6" />
         <!-- mullions -->
         <rect x="273" y="0" width="14" height="480" fill="#F4E6DA" />
         <rect x="0" y="233" width="560" height="14" fill="#F4E6DA" />
@@ -74,6 +83,13 @@
         <line x1="0" y1="740" x2="1440" y2="740" /><line x1="0" y1="790" x2="1440" y2="790" />
         <line x1="0" y1="850" x2="1440" y2="850" />
       </g>
+
+      <!-- at night the room dims and a paper lantern beside the window takes over -->
+      <template v-if="phase === 'night'">
+        <line x1="700" y1="0" x2="700" y2="198" stroke="#2A2233" stroke-width="3" />
+        <ellipse cx="700" cy="230" rx="46" ry="36" fill="#FFE3A6" />
+        <ellipse cx="700" cy="230" rx="46" ry="36" fill="none" stroke="#F0B866" stroke-width="2" />
+      </template>
 
       <!-- drum kit -->
       <g transform="translate(110 600) scale(0.82)">
@@ -167,6 +183,12 @@
           <rect x="208" y="16" width="7" height="14" />
         </g>
       </g>
+
+      <template v-if="phase === 'night'">
+        <rect width="1440" height="900" fill="#1B1436" opacity="0.5" style="mix-blend-mode: multiply" />
+        <rect width="1440" height="900" fill="url(#as-lamp)" />
+        <ellipse class="lamp" cx="700" cy="230" rx="40" ry="31" fill="#FFF1C9" />
+      </template>
     </svg>
 
     <!-- a few petals drifting past the window: the only ambient motion on the page -->
@@ -175,6 +197,27 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useApp } from '@/stores/app'
+
+type Phase = 'day' | 'dusk' | 'night'
+
+// The room follows the clock and the theme: daylight before four, sunset after, and night in the dark theme.
+const app = useApp()
+const phase = computed<Phase>(() => (app.theme === 'dark' ? 'night' : new Date().getHours() < 16 ? 'day' : 'dusk'))
+
+const PALETTES = {
+  day: { wall: ['#F3DDC8', '#E2BFA6'], sky: ['#6FB4EA', '#A9D8F5', '#FBEBCB'], glow: '#FFF3D0', glowOpacity: 0.5,
+         floor: ['#A97849', '#7A4E2F'], sun: [420, 110, 44], sunFill: '#FFF6D6', hills: ['#7FA3B8', '#5F8AA3'] },
+  dusk: { wall: ['#E6B9A6', '#C98E86'], sky: ['#8C7BC6', '#F28CA0', '#F7B58B'], glow: '#FFD9A0', glowOpacity: 0.55,
+          floor: ['#9C6B43', '#6E4429'], sun: [300, 400, 70], sunFill: '#FFE2B0', hills: ['#7A5A8E', '#5E466F'] },
+  night: { wall: ['#8E7391', '#6A5270'], sky: ['#141A3C', '#27306A', '#4B4285'], glow: '#C9D4FF', glowOpacity: 0.2,
+           floor: ['#7A5539', '#553623'], sun: [430, 120, 38], sunFill: '#F6F1DC', hills: ['#2E2A55', '#221F45'] },
+} as const
+const c = computed(() => PALETTES[phase.value])
+
+const STARS = [[40, 60, 2], [120, 150, 1.5], [200, 300, 2], [330, 60, 1.6], [380, 250, 2.2], [470, 190, 1.5], [520, 70, 2],
+               [90, 250, 1.4], [500, 320, 1.8], [310, 330, 1.4], [160, 330, 1.6], [540, 230, 1.3]]
 const petals = Array.from({ length: 9 }, (_, i) => ({
   id: i,
   style: {
@@ -191,7 +234,22 @@ const petals = Array.from({ length: 9 }, (_, i) => ({
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #c98e86;
+}
+.star {
+  animation: twinkle 4.8s ease-in-out infinite;
+}
+.lamp {
+  animation: lamp 5s ease-in-out infinite;
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes lamp {
+  50% {
+    opacity: 0.82;
+  }
 }
 .room {
   width: 100%;
@@ -226,6 +284,10 @@ const petals = Array.from({ length: 9 }, (_, i) => ({
 @media (prefers-reduced-motion: reduce) {
   .petal {
     display: none;
+  }
+  .star,
+  .lamp {
+    animation: none;
   }
 }
 </style>

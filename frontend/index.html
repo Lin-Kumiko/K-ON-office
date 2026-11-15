@@ -4,10 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/teacup.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f6f8" />
+    <meta name="description" content="放学后茶会株式会社的办公系统：考勤、请假、报销、会议室与审批。" />
     <title>放学后茶会</title>
+    <script>
+      // Apply the saved (or system) theme before first paint so the page never flashes the wrong one.
+      try {
+        var t = localStorage.getItem('doe_theme')
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        if (t === 'dark') document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
+    <style>
+      html { background: #f6f6f8; }
+      html.dark { background: #0f1013; }
+      .boot { position: fixed; inset: 0; display: grid; place-items: center; }
+      .boot img { width: 56px; height: 56px; animation: boot 1.6s ease-in-out infinite; }
+      @keyframes boot { 50% { transform: translateY(-6px); opacity: 0.6; } }
+      @media (prefers-reduced-motion: reduce) { .boot img { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><div class="boot"><img src="/teacup.svg" alt="正在加载" /></div></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

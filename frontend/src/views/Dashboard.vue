@@ -1,5 +1,5 @@
 <template>
-  <div class="page" v-loading="loading">
+  <div class="page" v-loading="loading && !!data">
     <div class="page-head">
       <div>
         <h2>{{ greeting }}，{{ data?.user.employee_name || data?.user.name }}</h2>
@@ -10,23 +10,28 @@
       </div>
     </div>
     <el-alert v-if="error" :title="error" type="error" show-icon class="mb" />
+    <div v-if="!data && loading" aria-hidden="true">
+      <div class="grid cols-4 mb"><div v-for="n in 4" :key="n" class="card"><span class="skeleton sk-label" /><span class="skeleton sk-value" /></div></div>
+      <div class="grid cols-2"><div v-for="n in 2" :key="n" class="card"><span class="skeleton sk-label" /><span v-for="m in 4" :key="m" class="skeleton sk-line" /></div></div>
+    </div>
     <template v-if="data">
       <div class="grid cols-4 mb">
         <router-link class="card stat stat-link" to="/approvals?tab=todo" data-test="stat-pending">
-          <span class="label">我的待办</span><span class="value">{{ data.stats.pending_tasks }}</span>
+          <span class="chip"><el-icon><Stamp /></el-icon></span><span class="label">我的待办</span><span class="value"><CountUp :value="data.stats.pending_tasks" /></span>
           <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
         </router-link>
         <router-link class="card stat stat-link" to="/approvals?tab=mine&status=running" data-test="stat-running">
-          <span class="label">审批中的申请</span><span class="value">{{ data.stats.running_applications }}</span>
+          <span class="chip"><el-icon><Timer /></el-icon></span><span class="label">审批中的申请</span><span class="value"><CountUp :value="data.stats.running_applications" /></span>
           <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
         </router-link>
         <router-link class="card stat stat-link" to="/notifications" data-test="stat-unread">
-          <span class="label">未读通知</span><span class="value">{{ data.stats.unread_notifications }}</span>
+          <span class="chip"><el-icon><Bell /></el-icon></span><span class="label">未读通知</span><span class="value"><CountUp :value="data.stats.unread_notifications" /></span>
           <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
         </router-link>
         <router-link class="card stat stat-link" :to="data.company_view ? '/employees' : '/leave'" data-test="stat-fourth">
+          <span class="chip"><el-icon><component :is="data.company_view ? 'User' : 'Calendar'" /></el-icon></span>
           <span class="label">{{ data.company_view ? '在职人数（数据范围内）' : '可用年假' }}</span>
-          <span class="value">{{ data.company_view ? data.stats.headcount : data.annual_leave ? hoursToDays(data.annual_leave.available_hours) : '-' }}</span>
+          <span class="value"><CountUp :value="data.company_view ? data.stats.headcount : data.annual_leave ? hoursToDays(data.annual_leave.available_hours) : '-'" /></span>
           <el-icon class="go" aria-hidden="true"><ArrowRight /></el-icon>
         </router-link>
       </div>
@@ -108,6 +113,7 @@ import { act } from '@/utils/usePaged'
 import { BUSINESS, fmtDateTime, fmtTime, hoursToDays, today as todayStr } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
 import EChart from '@/components/EChart.vue'
+import CountUp from '@/components/CountUp.vue'
 import InstanceDrawer from '@/components/InstanceDrawer.vue'
 
 const router = useRouter()
@@ -175,6 +181,34 @@ onMounted(load)
 }
 .stat-link:hover .label {
   color: var(--doe-brand);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--doe-brand-soft);
+  color: var(--doe-brand);
+  font-size: 17px;
+}
+.sk-label {
+  display: block;
+  width: 40%;
+  height: 14px;
+}
+.sk-value {
+  display: block;
+  width: 30%;
+  height: 34px;
+  margin-top: 14px;
+}
+.sk-line {
+  display: block;
+  height: 16px;
+  margin-top: 16px;
 }
 .go {
   position: absolute;

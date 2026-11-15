@@ -70,7 +70,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             candidate = (dist / full_path).resolve()
             if full_path and candidate.is_file() and dist.resolve() in candidate.parents:
                 return FileResponse(candidate)
-            return FileResponse(dist / "index.html")
+            # the page shell must be revalidated so a new release shows up at once; hashed assets stay cacheable
+            return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
 
     @app.on_event("shutdown")
     def _shutdown():

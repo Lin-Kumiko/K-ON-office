@@ -137,6 +137,7 @@ npm run typecheck
 npm test                 # Vitest
 npm run build
 npx playwright test      # E2E：自动启动隔离后端（tests/.e2e-data）并使用本机 Chrome
+npm run e2e:prefix       # 子路径冒烟：按 /k-on/ 构建并挂在 /k-on 下，验证资源、路由、接口都带前缀（不要与上一条同时运行）
 ```
 
 测试数据库全部是临时 SQLite 副本（`backend/.pytest_tmp`、`tests/.e2e-data`），不会触碰 `data/dev.sqlite3`。结果与说明见 [TEST_REPORT.md](TEST_REPORT.md)。
@@ -162,3 +163,13 @@ npx playwright test      # E2E：自动启动隔离后端（tests/.e2e-data）�
   3. 服务器上的 `k-on-pull.timer` 每 2 分钟检查一次，发现新版本就下载，校验 SHA-256 后交给 `k-on-deploy`：备份代码与数据库 → 同步代码 → 依赖有变化时安装 → 数据库迁移 → 重启 → 健康检查，失败自动回滚。
   4. Actions 会等到线上 `/release.txt` 变成本次提交号才算成功（最多 10 分钟）。
 - 服务器端安装：把 `deploy/k-on-deploy.sh`、`deploy/k-on-pull.sh` 装到 `/usr/local/sbin/`（去掉扩展名），`k-on-pull.service`、`k-on-pull.timer` 装到 `/etc/systemd/system/` 后 `systemctl enable --now k-on-pull.timer`。查看日志：`journalctl -u k-on-pull`。
+
+### 部署在共享域名的子路径下（可选）
+
+默认部署在域名根路径。要放在子路径下（例如 `https://example.com/k-on/`）：
+
+1. 前端构建时设置 `DOE_BASE_PATH`：本地 `DOE_BASE_PATH=/k-on/ npm run build`；CI 里设置仓库变量 `DOE_BASE_PATH=/k-on/`（工作流的前端构建步骤会读它，变量为空就是根路径）。前缀在构建时固定，产物只能放在这个路径下。
+2. nginx 把 `/k-on/` 转给后端并剥掉前缀（`proxy_pass http://127.0.0.1:8000/;`，写法见 `deploy/nginx-k-on-office.conf` 里的注释），仍要保留 `Host`、`X-Real-IP`、`X-Forwarded-For`、`X-Forwarded-Proto`。后端代码不用改。
+3. 可选：uvicorn 加 `--root-path /k-on`，让 `/k-on/docs` 找得到 `openapi.json`，后端生成的重定向地址也带前缀。
+4. 仓库变量 `DEPLOY_URL` 要带前缀（例如 `https://example.com/k-on`），Actions 才能轮询到 `/k-on/release.txt`。
+5. 验证：`npm run e2e:prefix`。

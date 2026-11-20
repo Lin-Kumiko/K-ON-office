@@ -1,4 +1,6 @@
 // Thin fetch wrapper: token handling, query building and a uniform ApiError.
+import { withBase } from '@/utils/basePath'
+
 export class ApiError extends Error {
   status: number
   code: string
@@ -70,7 +72,8 @@ export async function request<T = any>(method: string, url: string, opts: Option
   }
   let resp: Response
   try {
-    resp = await fetch(buildUrl(url, opts.params), { method, headers, body })
+    // every API call goes through here, so this is the one place that adds the app base (see utils/basePath.ts)
+    resp = await fetch(withBase(buildUrl(url, opts.params)), { method, headers, body })
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', '无法连接服务器，请检查后端是否启动')
   }

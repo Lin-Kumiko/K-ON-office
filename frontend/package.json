@@ -9,7 +9,8 @@
     "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:prefix": "vite build --base=/k-on/ --outDir dist-prefix --emptyOutDir && playwright test -c playwright.prefix.config.ts"
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.3.2",

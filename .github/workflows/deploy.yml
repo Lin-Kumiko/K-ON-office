@@ -48,6 +48,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+        env:
+          # Repo variable DOE_BASE_PATH (e.g. /k-on/) builds the app for a sub-path; empty means the site root.
+          DOE_BASE_PATH: ${{ vars.DOE_BASE_PATH }}
       - uses: actions/upload-artifact@v4
         with:
           name: dist

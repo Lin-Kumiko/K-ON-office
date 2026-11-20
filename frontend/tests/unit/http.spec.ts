@@ -7,6 +7,7 @@ function mockFetch(status: number, body: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
   setToken(null)
 })
 
@@ -14,6 +15,23 @@ describe('http client', () => {
   it('builds query strings and skips empty params', () => {
     expect(buildUrl('/api/x', { a: 1, b: '', c: null, d: undefined, e: false })).toBe('/api/x?a=1&e=false')
     expect(buildUrl('/api/x?y=1', { z: 'q w' })).toBe('/api/x?y=1&z=q+w')
+  })
+
+  it('keeps API URLs unchanged at the site root', async () => {
+    const f = mockFetch(200, { ok: true })
+    vi.stubGlobal('fetch', f)
+    await api.get('/api/auth/me', { q: 1 })
+    expect((f.mock.calls[0] as unknown as [string])[0]).toBe('/api/auth/me?q=1')
+  })
+
+  it('prefixes API URLs with the app base when served under a sub-path', async () => {
+    vi.stubEnv('BASE_URL', '/k-on/')
+    const f = mockFetch(200, { ok: true })
+    vi.stubGlobal('fetch', f)
+    await api.get('/api/auth/me', { q: 1 })
+    await api.post('/api/auth/login', { username: 'u' })
+    expect((f.mock.calls[0] as unknown as [string])[0]).toBe('/k-on/api/auth/me?q=1')
+    expect((f.mock.calls[1] as unknown as [string])[0]).toBe('/k-on/api/auth/login')
   })
 
   it('sends the bearer token and parses JSON', async () => {

@@ -2,8 +2,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import { normalizeBase } from './src/utils/basePath'
 
 export default defineConfig({
+  // The site root by default. CI sets DOE_BASE_PATH (e.g. /k-on/) when the app is served from a sub-path.
+  base: normalizeBase(process.env.DOE_BASE_PATH),
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   cacheDir: '.vite-cache',

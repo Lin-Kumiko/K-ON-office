@@ -10,6 +10,7 @@ WorkingDirectory=/opt/k-on-office/backend
 EnvironmentFile=/etc/k-on-office.env
 ExecStart=/opt/k-on-office/backend/.venv/bin/python -m uvicorn app.main:create_app --factory \
     --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+# Behind a sub-path proxy (nginx strips /k-on/) add `--root-path /k-on` above, so /k-on/docs and redirects get the prefix.
 Restart=on-failure
 RestartSec=5
 

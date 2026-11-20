@@ -11,6 +11,7 @@ data/
 
 # build output and caches
 frontend/dist/
+frontend/dist-prefix/
 frontend/.vite-cache/
 __pycache__/
 *.pyc

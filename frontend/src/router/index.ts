@@ -33,7 +33,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ]
 
-export const router = createRouter({ history: createWebHistory(), routes })
+// BASE_URL is "/" unless the build was made for a sub-path (see utils/basePath.ts).
+export const router = createRouter({ history: createWebHistory(import.meta.env.BASE_URL), routes })
 bindLoginPrompt(router)
 
 router.beforeEach(async (to, from) => {

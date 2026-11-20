@@ -3,6 +3,9 @@
 Creates a fresh SQLite database under tests/.e2e-data (migrations + base seed with the password
 from E2E_PASSWORD), then serves the API and the built frontend (frontend/dist) on --port.
 Never touches data/dev.sqlite3.
+
+--prefix /k-on serves everything under that sub-path (the way nginx exposes the app on the server);
+--dist <dir> serves a different frontend build, e.g. one made with `vite build --base=/k-on/`.
 """
 from __future__ import annotations
 
@@ -21,6 +24,8 @@ DATA = ROOT / "tests" / ".e2e-data"
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--prefix", default="", help="serve the app under this sub-path, e.g. /k-on")
+    ap.add_argument("--dist", default="", help="frontend build directory (default: frontend/dist)")
     args = ap.parse_args()
     password = os.environ.get("E2E_PASSWORD")
     if not password:
@@ -55,7 +60,14 @@ def main() -> int:
 
     import uvicorn
     from app.main import create_app
-    uvicorn.run(create_app(load_settings()), host="127.0.0.1", port=args.port, log_level="warning")
+    overrides = {"frontend_dist": Path(args.dist).resolve()} if args.dist else {}
+    app = create_app(load_settings(**overrides))
+    prefix = args.prefix.strip("/")
+    if prefix:
+        from starlette.applications import Starlette
+        from starlette.routing import Mount
+        app = Starlette(routes=[Mount(f"/{prefix}", app=app)])
+    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
     return 0
 
 

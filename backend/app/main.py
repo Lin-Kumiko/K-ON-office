@@ -51,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     for r in ROUTERS:
         app.include_router(r)
 
+    @app.head("/api/health", include_in_schema=False)  # monitors and `curl -I` probe with HEAD
     @app.get("/api/health", tags=["系统与权限"], summary="健康检查")
     def health():
         with app.state.db.engine.connect() as conn:
@@ -60,8 +61,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     dist: Path = settings.frontend_dist
     if dist.is_dir() and (dist / "index.html").is_file():
         from fastapi.staticfiles import StaticFiles
-        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
+        class HashedAssets(StaticFiles):
+            """Vite puts a content hash in every file name under assets/, so a URL never changes content."""
+
+            async def get_response(self, path, scope):
+                response = await super().get_response(path, scope)
+                if response.status_code in (200, 304):
+                    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                return response
+
+        app.mount("/assets", HashedAssets(directory=dist / "assets"), name="assets")
+
+        @app.head("/{full_path:path}", include_in_schema=False)
         @app.get("/{full_path:path}", include_in_schema=False)
         def spa(full_path: str):
             if full_path.startswith("api/"):
@@ -69,7 +81,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise NotFound("接口不存在")
             candidate = (dist / full_path).resolve()
             if full_path and candidate.is_file() and dist.resolve() in candidate.parents:
-                return FileResponse(candidate)
+                # unhashed root files: the release marker must always be fresh, icons may be reused for a day
+                cache = "no-cache" if full_path == "release.txt" else "public, max-age=86400"
+                return FileResponse(candidate, headers={"Cache-Control": cache})
             # the page shell must be revalidated so a new release shows up at once; hashed assets stay cacheable
             return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
 
